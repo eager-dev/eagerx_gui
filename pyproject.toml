@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "eagerx_gui"
+version = "0.1.4"
+license = "Apache2.0"
+description = "GUI to visualise graphs in EAGERx."
+authors = ["Jelle Luijkx <j.d.luijkx@tudelft.nl>", "Bas van der Heijden <d.s.vanderheijden@tudelft.nl>"]
+homepage = "https://github.com/eager-dev/eagerx_gui"
+repository = "https://github.com/eager-dev/eagerx_gui"
+documentation = "https://eagerx.readthedocs.io/en/master/"
+
+[tool.poetry.dependencies]
+python = "^3.6.2"
+eagerx = "^0.1.10"
+opencv-python = "4.3.0.36"
+pyqtgraph = "^0.11.1"
+PyQt5 = "^5.15.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+black = "^22.1.0"
+pytest-cov = "^3.0.0"
+flake8 = "^4.0.1"
+flake8-bugbear = "^22.3.20"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.semantic_release]
+version_variable = [
+    "eagerx_gui/__init__.py:__version__",
+    "pyproject.toml:version"
+]
+branch = "master"
+upload_to_pypi = true
+upload_to_release = true
+build_command = "pip install poetry && poetry build"
