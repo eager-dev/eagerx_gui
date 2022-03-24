@@ -1,8 +1,9 @@
 from eagerx.core.graph import Graph
-from eagerx_gui import create_gui
+from eagerx_gui.gui import Gui
+from pyqtgraph.Qt import QtGui
 
-import pytest
 
 def test_gui():
+    app = QtGui.QApplication([])
     graph = Graph.create()
-    create_gui(graph._state)
+    gui = Gui(graph._state)

@@ -5,11 +5,12 @@ from pyqtgraph.Qt import QtGui, QtCore
 from eagerx_gui.gui import Gui
 
 
-def create_gui(state):
+def launch_gui(state):
     app = QtGui.QApplication([])
 
     # Create main window with grid layout
     win = QtGui.QMainWindow()
+    win.setWindowTitle("EAGERx Graph Creator")
 
     cw = QtGui.QWidget()
 
@@ -23,12 +24,6 @@ def create_gui(state):
 
     # Add flowchart control panel to the main window
     layout.addWidget(w, 0, 0, 2, 1)
-    return win, rx_gui
-
-
-def launch_gui(state):
-    win, rx_gui = create_gui(state)
-    win.setWindowTitle("EAGERx Graph Creator")
 
     win.show()
 
