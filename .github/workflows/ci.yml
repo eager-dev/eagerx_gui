@@ -103,6 +103,7 @@ jobs:
             libopengl0
       - name: 'XVFB Display Info'
         run: |
+          source .venv/bin/activate
           xvfb-run --server-args="-screen 0, 1920x1200x24 -ac +extension GLX +render -noreset" python -m pyqtgraph.util.glinfo
           xvfb-run --server-args="-screen 0, 1920x1200x24 -ac +extension GLX +render -noreset" python -m pyqtgraph.util.get_resolution
       #----------------------------------------------
