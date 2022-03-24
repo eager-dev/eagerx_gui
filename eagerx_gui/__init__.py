@@ -7,7 +7,7 @@ from eagerx_gui.gui import Gui
 
 def create_gui(state):
     app = QtGui.QApplication([])
-    
+
     # Create main window with grid layout
     win = QtGui.QMainWindow()
 
