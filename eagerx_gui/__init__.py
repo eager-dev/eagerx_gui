@@ -6,15 +6,15 @@ from eagerx_gui.gui import Gui
 
 
 def create_gui(state):
-    app = QtGui.QApplication([])
-
     # Create main window with grid layout
     win = QtGui.QMainWindow()
-    win.setWindowTitle("EAGERx Graph Creator")
+
     cw = QtGui.QWidget()
-    win.setCentralWidget(cw)
+
     layout = QtGui.QGridLayout()
     cw.setLayout(layout)
+
+    win.setCentralWidget(cw)
 
     rx_gui = Gui(state)
     w = rx_gui.widget()
@@ -25,7 +25,10 @@ def create_gui(state):
 
 
 def launch_gui(state):
+    app = QtGui.QApplication([])
     win, rx_gui = create_gui(state)
+    win.setWindowTitle("EAGERx Graph Creator")
+
     win.show()
 
     if (sys.flags.interactive != 1) or not hasattr(QtCore, "PYQT_VERSION"):
