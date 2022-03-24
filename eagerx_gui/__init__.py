@@ -6,6 +6,8 @@ from eagerx_gui.gui import Gui
 
 
 def create_gui(state):
+    app = QtGui.QApplication([])
+    
     # Create main window with grid layout
     win = QtGui.QMainWindow()
 
@@ -25,7 +27,6 @@ def create_gui(state):
 
 
 def launch_gui(state):
-    app = QtGui.QApplication([])
     win, rx_gui = create_gui(state)
     win.setWindowTitle("EAGERx Graph Creator")
 
