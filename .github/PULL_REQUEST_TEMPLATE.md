@@ -19,16 +19,14 @@
 ## Checklist:
 <!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
 <!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
-- [ ] I have read the [CONTRIBUTION](https://github.com/eager-dev/eagerx/blob/master/CONTRIBUTING.rst) guide (**required**)
-- [ ] I have used semantic commit messages such that my PR is [semantic](https://github.com/zeke/semantic-pull-requests) (**required**)
-- [ ] I have updated the changelog accordingly (**required**).
+- [ ] I have read the [CONTRIBUTION](https://github.com/eager-dev/eagerx/blob/master/CONTRIBUTING.rst) guide (**required**).
+- [ ] I have used semantic commit messages such that my PR is [semantic](https://github.com/zeke/semantic-pull-requests) (**required**).
 - [ ] My change requires a change to the documentation.
 - [ ] I have updated the tests accordingly (*required for a bug fix or a new feature*).
 - [ ] I have updated the documentation accordingly.
-- [ ] I have reformatted the code using `make codestyle` (**required**)
-- [ ] I have checked the codestyle using `make check-codestyle` and `make lint` (**required**)
-- [ ] I have ensured `make pytest` passes. (**required**)
-- [ ] I have checked that the documentation builds using `make doc` (**required**)
+- [ ] I have reformatted the code using `make codestyle` (**required**).
+- [ ] I have checked the codestyle using `make check-codestyle` and `make lint` (**required**).
+- [ ] I have ensured `make pytest` passes. (**required**).
 
 Note: we are using a maximum length of 127 characters per line
 
