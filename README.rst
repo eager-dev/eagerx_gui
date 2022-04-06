@@ -53,6 +53,12 @@ If you are using EAGERx for your scientific publications, please cite:
         howpublished = {\url{https://github.com/eager-dev/eagerx}}
     }
 
+Credits
+=======
+
+The *eagerx_gui* package is heavily based on `pyqtgraph <https://github.com/pyqtgraph/pyqtgraph>`_.
+The GUI is adapted from the implementation of the `pyqtgraph flowchart <https://github.com/pyqtgraph/pyqtgraph/tree/master/pyqtgraph/flowchart>`_.
+
 Acknowledgements
 =================
 EAGERx is funded by the `OpenDR <https://opendr.eu/>`_ Horizon 2020 project.

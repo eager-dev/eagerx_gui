@@ -16,7 +16,7 @@ class RxView(GraphicsView):
         self.setBackground((255, 255, 255))
         self._vb = RxViewBox(widget, lockAspect=True, invertY=True)
         self.setCentralItem(self._vb)
-        self.setRenderHint(QtGui.QPainter.Antialiasing, True)
+        self.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
 
     def viewBox(self):
         return self._vb

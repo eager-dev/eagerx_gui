@@ -46,7 +46,7 @@ def exception_handler(function_to_decorate):
             label = QtGui.QLabel(str(e))
             layout.addWidget(label)
             error_window.setLayout(layout)
-            error_window.exec_()
+            error_window.exec()
             raise
 
     return exception_handler_wrapper
@@ -104,7 +104,7 @@ class NodeCreationDialog(QtGui.QDialog):
         self.setLayout(self.layout)
 
     def open(self):
-        self.exec_()
+        self.exec()
         return self.mapping
 
     def add_widget(self, key, value, parameter, row):
@@ -204,7 +204,7 @@ class ParamWindow(QtGui.QDialog):
         self.setLayout(self.layout)
 
     def open(self):
-        self.exec_()
+        self.exec()
         valid = False
         while not valid:
             try:
@@ -212,7 +212,7 @@ class ParamWindow(QtGui.QDialog):
                 self.node.graph.load_state(clear=True)
                 valid = True
             except Exception:
-                self.exec_()
+                self.exec()
 
     @exception_handler
     def set_params(self):
@@ -369,7 +369,7 @@ class ConverterDialog(QtGui.QDialog):
         self.setLayout(self.layout)
 
     def open(self):
-        self.exec_()
+        self.exec()
         valid = False
         while not valid:
             try:
@@ -384,8 +384,8 @@ class ConverterDialog(QtGui.QDialog):
                 label = QtGui.QLabel(str(e))
                 layout.addWidget(label)
                 error_window.setLayout(layout)
-                error_window.exec_()
-                self.exec_()
+                error_window.exec()
+                self.exec()
         return self.converter
 
     def add_argument_widgets(self, required_args, optional_args):
@@ -573,7 +573,7 @@ class ConnectionDialog(QtGui.QDialog):
         self.setLayout(self.layout)
 
     def open(self):
-        self.exec_()
+        self.exec()
         for widget in self.widgets:
             widget.setEnabled(False)
         return self.params

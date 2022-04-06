@@ -9,11 +9,11 @@ repository = "https://github.com/eager-dev/eagerx_gui"
 documentation = "https://eagerx.readthedocs.io/en/master/"
 
 [tool.poetry.dependencies]
-python = "^3.6.2"
+python = "^3.8"
 eagerx = "^0.1.10"
-opencv-python = "4.3.0.36"
-pyqtgraph = "^0.11.1"
-PyQt5 = "^5.15.6"
+opencv-python = "^4.3.0.36"
+pyqtgraph = "^0.12.4"
+PyQt6 = "^6.2.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
