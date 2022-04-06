@@ -4,7 +4,6 @@
 
 # -*- coding: utf-8 -*-
 import os
-import numpy as np
 import importlib
 import networkx as nx
 from copy import deepcopy
@@ -12,7 +11,7 @@ from functools import partial
 
 # Import pyqtgraph modules
 from pyqtgraph.graphicsItems.GraphicsObject import GraphicsObject
-from pyqtgraph.Qt import QtCore, QtGui, QT_LIB
+from pyqtgraph.Qt import QT_LIB, QtCore, QtWidgets
 from pyqtgraph import FileDialog, DataTreeWidget
 from pyqtgraph import dockarea
 from pyqtgraph.debug import printExc
@@ -26,7 +25,6 @@ from eagerx_gui import gui_view
 from eagerx_gui.gui_node import RxGuiNode, NodeGraphicsItem
 from eagerx_gui.gui_terminal import TerminalGraphicsItem, ConnectionItem
 from eagerx_gui.pyqtgraph_utils import exception_handler, NodeCreationDialog
-
 
 # pyside and pyqt use incompatible ui files.
 rx_ui_template = importlib.import_module("eagerx_gui.templates.ui_{}".format(QT_LIB.lower()))
@@ -252,7 +250,7 @@ class Gui(Graph, QtCore.QObject):
                 start_dir = ""
             self.fileDialog = FileDialog(None, "Save Graph..", start_dir, "Graph (*.graph)")
             self.fileDialog.setDefaultSuffix("graph")
-            self.fileDialog.setAcceptMode(QtGui.QFileDialog.AcceptSave)
+            self.fileDialog.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
             self.fileDialog.show()
             self.fileDialog.fileSelected.connect(self.save_file)
             return
@@ -290,34 +288,31 @@ class GraphicsItem(GraphicsObject):
         pass
 
 
-class CtrlWidget(QtGui.QWidget):
+class CtrlWidget(QtWidgets.QWidget):
     """The widget that contains the list of all the nodes in a flowchart and their controls, as well as buttons for
     loading/saving flowcharts."""
 
     def __init__(self, chart):
         self.items = {}
         self.current_file_name = None
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.chart = chart
         self.ui = rx_ui_template.Ui_Form()
         self.ui.setupUi(self)
         self.ui.ctrlList.setColumnCount(2)
         self.ui.ctrlList.setColumnWidth(1, 20)
-        self.ui.ctrlList.setVerticalScrollMode(self.ui.ctrlList.ScrollPerPixel)
-        self.ui.ctrlList.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.ui.ctrlList.setVerticalScrollMode(self.ui.ctrlList.ScrollMode.ScrollPerPixel)
+        self.ui.ctrlList.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.chartWidget = EagerxGraphWidget(chart, self)
         self.scene = self.chartWidget.scene
-        self.cwWin = QtGui.QMainWindow()
+        self.cwWin = QtWidgets.QMainWindow()
         self.cwWin.setWindowTitle("EAGERx Graph")
         self.cwWin.setCentralWidget(self.chartWidget)
         self.cwWin.resize(1000, 800)
 
         h = self.ui.ctrlList.header()
-        if QT_LIB in ["PyQt4", "PySide"]:
-            h.setResizeMode(0, h.Stretch)
-        else:
-            h.setSectionResizeMode(0, h.Stretch)
+        h.setSectionResizeMode(0, h.ResizeMode.Stretch)
 
         self.ui.ctrlList.itemChanged.connect(self.itemChanged)
         self.ui.loadBtn.clicked.connect(self.load_clicked)
@@ -325,7 +320,7 @@ class CtrlWidget(QtGui.QWidget):
         self.ui.saveAsBtn.clicked.connect(self.save_as_clicked)
         self.ui.showChartBtn.toggled.connect(self.chart_toggled)
         self.ui.checkValidityBtn.clicked.connect(self.check_validity_toggled)
-        self.ui.showCompatibleBridgesBtn.clicked.connect(self.show_compatible_bridges_toggled)
+        # self.ui.showCompatibleBridgesBtn.clicked.connect(self.show_compatible_bridges_toggled)
 
         self.chart.sigFileLoaded.connect(self.set_current_file)
         self.chart.sigFileSaved.connect(self.file_saved)
@@ -374,19 +369,19 @@ class CtrlWidget(QtGui.QWidget):
     def _check_validity(self):
         self.chart._is_valid(state=self.chart.state())
 
-    def show_compatible_bridges_toggled(self):
-        try:
-            label_string = self.chart.check_exists_compatible_bridge(self.chart.state(), tablefmt="html")
-        except Exception as e:
-            label_string = str(e)
-        bridges_window = QtGui.QDialog(self.chart.widget().cwWin)
-        bridges_window.setWindowTitle("Compatible Bridges")
-        layout = QtGui.QGridLayout()
-        label = QtGui.QLabel(label_string)
-        label.setWordWrap(True)
-        layout.addWidget(label)
-        bridges_window.setLayout(layout)
-        bridges_window.exec_()
+    # def show_compatible_bridges_toggled(self):
+    #     try:
+    #         label_string = self.chart.check_exists_compatible_bridge(self.chart.state(), tablefmt="html")
+    #     except Exception as e:
+    #         label_string = str(e)
+    #     bridges_window = QtWidgets.QDialog(self.chart.widget().cwWin)
+    #     bridges_window.setWindowTitle("Compatible Bridges")
+    #     layout = QtWidgets.QGridLayout()
+    #     label = QtWidgets.QLabel(label_string)
+    #     label.setWordWrap(True)
+    #     layout.addWidget(label)
+    #     bridges_window.setLayout(layout)
+    #     bridges_window.exec()
 
     def set_current_file(self, file_name):
         self.current_file_name = file_name
@@ -407,11 +402,11 @@ class CtrlWidget(QtGui.QWidget):
 
     def add_node(self, node):
         ctrl = node.ctrl_widget()
-        item = QtGui.QTreeWidgetItem([node.name, "", ""])
+        item = QtWidgets.QTreeWidgetItem([node.name, "", ""])
         self.ui.ctrlList.addTopLevelItem(item)
 
         if ctrl is not None:
-            item2 = QtGui.QTreeWidgetItem()
+            item2 = QtWidgets.QTreeWidgetItem()
             item.addChild(item2)
             self.ui.ctrlList.setItemWidget(item2, 0, ctrl)
 
@@ -449,17 +444,17 @@ class EagerxGraphWidget(dockarea.DockArea):
         self.viewDock.hideTitleBar()
         self.addDock(self.viewDock)
 
-        self.hoverText = QtGui.QTextEdit()
+        self.hoverText = QtWidgets.QTextEdit()
         self.hoverText.setReadOnly(True)
         self.hoverDock = dockarea.Dock("Hover Info", size=(1000, 20))
         self.hoverDock.addWidget(self.hoverText)
         self.addDock(self.hoverDock, "bottom")
 
-        self.selInfo = QtGui.QWidget()
-        self.selInfoLayout = QtGui.QGridLayout()
+        self.selInfo = QtWidgets.QWidget()
+        self.selInfoLayout = QtWidgets.QGridLayout()
         self.selInfo.setLayout(self.selInfoLayout)
-        self.selDescLabel = QtGui.QLabel()
-        self.selNameLabel = QtGui.QLabel()
+        self.selDescLabel = QtWidgets.QLabel()
+        self.selNameLabel = QtWidgets.QLabel()
         self.selDescLabel.setWordWrap(True)
         self.selectedTree = DataTreeWidget()
         self.selInfoLayout.addWidget(self.selDescLabel)
@@ -488,7 +483,7 @@ class EagerxGraphWidget(dockarea.DockArea):
         for node_type, library in self.chart.library.items():
             if node_type in constants.GUI_ENTITIES_TO_IGNORE:
                 continue
-            menu = QtGui.QMenu("Add {}".format(node_type.replace("_", " ")))
+            menu = QtWidgets.QMenu("Add {}".format(node_type.replace("_", " ")))
             build_sub_menu(library, menu, self.submenus, pos=pos)
             menu.triggered.connect(partial(self.node_menu_triggered))
             self.nodeMenu.append(menu)

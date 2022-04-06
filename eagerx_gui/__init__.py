@@ -1,23 +1,21 @@
 __version__ = "0.1.4"
 
-import sys
-from pyqtgraph.Qt import QtGui, QtCore
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtWidgets, QtGui
 from eagerx_gui.gui import Gui
+import sys
 
 
 def launch_gui(state):
-    app = QtGui.QApplication([])
+    app = QtGui.QApplication(sys.argv)
 
-    # Create main window with grid layout
-    win = QtGui.QMainWindow()
-    win.setWindowTitle("EAGERx Graph Creator")
-
-    cw = QtGui.QWidget()
-
-    layout = QtGui.QGridLayout()
-    cw.setLayout(layout)
-
+    ## Create main window with grid layout
+    win = QtWidgets.QMainWindow()
+    win.setWindowTitle("pyqtgraph example: Flowchart")
+    cw = QtWidgets.QWidget()
     win.setCentralWidget(cw)
+    layout = QtWidgets.QGridLayout()
+    cw.setLayout(layout)
 
     rx_gui = Gui(state)
     w = rx_gui.widget()
@@ -27,7 +25,7 @@ def launch_gui(state):
 
     win.show()
 
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, "PYQT_VERSION"):
-        QtGui.QApplication.instance().exec_()
+    app.exec()
     new_state = rx_gui.state()
+    app.quit()
     return new_state

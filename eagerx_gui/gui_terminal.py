@@ -2,7 +2,7 @@
  Adapted from https://github.com/pyqtgraph/pyqtgraph/blob/master/pyqtgraph/flowchart/Terminal.py
 """
 
-from pyqtgraph.Qt import QtCore, QtGui
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 from pyqtgraph.graphicsItems.GraphicsObject import GraphicsObject
 from pyqtgraph import functions as fn
 from pyqtgraph.Point import Point
@@ -266,20 +266,22 @@ class GuiTerminal(object):
             item.scene().removeItem(item)
 
 
-class TextItem(QtGui.QGraphicsTextItem):
-    def __init__(self, is_renamable, text, termimnal_graphics_item):
-        self._is_renamable = is_renamable
-        super().__init__(text, termimnal_graphics_item)
+class TextItem(QtWidgets.QGraphicsTextItem):
+    def __init__(self, text, parent, on_update):
+        super().__init__(text, parent)
+        self.on_update = on_update
 
-    def mousePressEvent(self, ev):
-        if ev.button() == QtCore.Qt.RightButton:
-            if self._is_renamable:
-                self.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-            ev.ignore()
-        elif ev.button() == QtCore.Qt.LeftButton:
-            if self._is_renamable:
-                self.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
-            super().mousePressEvent(ev)
+    def focusOutEvent(self, ev):
+        super().focusOutEvent(ev)
+        if self.on_update is not None:
+            self.on_update()
+
+    def keyPressEvent(self, ev):
+        if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
+            if self.on_update is not None:
+                self.on_update()
+                return
+        super().keyPressEvent(ev)
 
 
 class TerminalGraphicsItem(GraphicsObject):
@@ -288,12 +290,13 @@ class TerminalGraphicsItem(GraphicsObject):
         GraphicsObject.__init__(self, parent)
         self.brush = fn.mkBrush(0, 0, 0)
         self.box = QtGui.QGraphicsRectItem(0, 0, 10, 10, self)
-        self.label = TextItem(self.term.is_renamable, self.term.terminal_name, self)
-        self.label.scale(0.7, 0.7)
+        on_update = self.label_changed if self.term.is_renamable else None
+        self.label = TextItem(self.term.terminal_name, self, on_update)
+        self.label.setScale(0.7)
         self.newConnection = None
         self.setFiltersChildEvents(True)  # to pick up mouse events on the rectitem
         if self.term.is_renamable:
-            self.label.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
+            self.label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextEditorInteraction)
             self.label.focusOutEvent = self.label_focus_out
             self.label.keyPressEvent = self.label_key_press
         self.setZValue(1)
@@ -304,7 +307,7 @@ class TerminalGraphicsItem(GraphicsObject):
         self.label_changed()
 
     def label_key_press(self, ev):
-        if ev.key() == QtCore.Qt.Key_Enter or ev.key() == QtCore.Qt.Key_Return:
+        if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
             self.label_changed()
         else:
             QtGui.QGraphicsTextItem.keyPressEvent(self.label, ev)
@@ -374,15 +377,15 @@ class TerminalGraphicsItem(GraphicsObject):
         ev.ignore()  # necessary to allow click/drag events to process correctly
 
     def mouseClickEvent(self, ev):
-        if ev.button() == QtCore.Qt.LeftButton:
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
-            self.label.setFocus(QtCore.Qt.MouseFocusReason)
-        elif ev.button() == QtCore.Qt.RightButton:
+            self.label.setFocus(QtCore.Qt.FocusReason.MouseFocusReason)
+        elif ev.button() == QtCore.Qt.MouseButton.RightButton:
             ev.accept()
             self.raise_context_menu(ev)
 
     def mouseDoubleClickEvent(self, ev):
-        if int(ev.button()) == int(QtCore.Qt.LeftButton):
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
             param_window = ParamWindow(node=self.term.node, term=self.term)
             param_window.open()
@@ -415,7 +418,7 @@ class TerminalGraphicsItem(GraphicsObject):
         self.term.node.remove_terminal(self.term)
 
     def mouseDragEvent(self, ev):
-        if ev.button() != QtCore.Qt.LeftButton:
+        if ev.button() != QtCore.Qt.MouseButton.LeftButton:
             ev.ignore()
             return
         if not self.term.is_connectable:
@@ -453,10 +456,10 @@ class TerminalGraphicsItem(GraphicsObject):
                 self.newConnection.set_target(self.mapToView(ev.pos()))
 
     def hoverEvent(self, ev):
-        if not ev.isExit() and ev.acceptDrags(QtCore.Qt.LeftButton):
-            ev.acceptClicks(QtCore.Qt.LeftButton)
+        if not ev.isExit() and ev.acceptDrags(QtCore.Qt.MouseButton.LeftButton):
+            ev.acceptClicks(QtCore.Qt.MouseButton.LeftButton)
             # we don't use the click, but we also don't want anyone else to use it.
-            ev.acceptClicks(QtCore.Qt.RightButton)
+            ev.acceptClicks(QtCore.Qt.MouseButton.RightButton)
             self.box.setBrush(fn.mkBrush("w"))
         else:
             self.box.setBrush(self.brush)
@@ -474,7 +477,7 @@ class TerminalGraphicsItem(GraphicsObject):
 class ConnectionItem(GraphicsObject):
     def __init__(self, source, target=None):
         GraphicsObject.__init__(self)
-        self.setFlags(self.ItemIsSelectable | self.ItemIsFocusable)
+        self.setFlags(self.GraphicsItemFlag.ItemIsSelectable | self.GraphicsItemFlag.ItemIsFocusable)
         self.source = source
         self.target = target
         self.length = 0
@@ -563,10 +566,10 @@ class ConnectionItem(GraphicsObject):
             ev.ignore()
             return
 
-        if ev.key() == QtCore.Qt.Key_Delete or ev.key() == QtCore.Qt.Key_Backspace:
+        if ev.key() == QtCore.Qt.Key.Key_Delete or ev.key() == QtCore.Qt.Key.Key_Backspace:
             self.source.disconnect(self.target)
             ev.accept()
-        elif ev.key() == QtCore.Qt.Key_Control:
+        elif ev.key() == QtCore.Qt.Key.Key_Control:
             ev.accept()
             if self.style["shape"] == "line":
                 self.setStyle(shape="cubic")
@@ -579,7 +582,7 @@ class ConnectionItem(GraphicsObject):
         ev.ignore()
 
     def mouseClickEvent(self, ev):
-        if ev.button() == QtCore.Qt.LeftButton:
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
             sel = self.isSelected()
             self.setSelected(True)
@@ -588,13 +591,13 @@ class ConnectionItem(GraphicsObject):
                 self.update()
 
     def mouseDoubleClickEvent(self, ev):
-        if int(ev.button()) == int(QtCore.Qt.LeftButton):
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
             if self.connection_window is not None:
                 self.connection_window.show()
 
     def hoverEvent(self, ev):
-        if (not ev.isExit()) and ev.acceptClicks(QtCore.Qt.LeftButton):
+        if (not ev.isExit()) and ev.acceptClicks(QtCore.Qt.MouseButton.LeftButton):
             self.hovered = True
         else:
             self.hovered = False

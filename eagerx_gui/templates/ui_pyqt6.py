@@ -1,7 +1,9 @@
 """
  Mostly copy paste from https://github.com/pyqtgraph/pyqtgraph/blob/master/pyqtgraph/flowchart/FlowchartCtrlTemplate_pyqt5.py
 """
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
+from pyqtgraph.widgets.FeedbackButton import FeedbackButton
+from pyqtgraph.widgets.TreeWidget import TreeWidget
 
 
 class Ui_Form(object):
@@ -40,10 +42,9 @@ class Ui_Form(object):
         self.fileNameLabel = QtWidgets.QLabel(Form)
         font = QtGui.QFont()
         font.setBold(True)
-        font.setWeight(75)
         self.fileNameLabel.setFont(font)
         self.fileNameLabel.setText("")
-        self.fileNameLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.fileNameLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.fileNameLabel.setObjectName("fileNameLabel")
         self.gridLayout.addWidget(self.fileNameLabel, 0, 1, 1, 1)
 
@@ -59,7 +60,3 @@ class Ui_Form(object):
         self.checkValidityBtn.setText(_translate("Form", "Check Validity"))
         self.showChartBtn.setText(_translate("Form", "Show Graph"))
         # self.showCompatibleBridgesBtn.setText(_translate("Form", "Compatible Bridges"))
-
-
-from pyqtgraph.widgets.FeedbackButton import FeedbackButton
-from pyqtgraph.widgets.TreeWidget import TreeWidget

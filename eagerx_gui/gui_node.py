@@ -10,10 +10,12 @@ from eagerx_gui.utils import get_yaml_type
 from eagerx_gui.gui_terminal import GuiTerminal
 from eagerx_gui.pyqtgraph_utils import exception_handler, ParamWindow
 
-from pyqtgraph.Qt import QtCore, QtGui
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 from pyqtgraph.graphicsItems.GraphicsObject import GraphicsObject
 from pyqtgraph import functions as fn
-from pyqtgraph.pgcollections import OrderedDict
+from collections import OrderedDict
+
+translate = QtCore.QCoreApplication.translate
 
 
 class RxGuiNode(QtCore.QObject):
@@ -241,21 +243,46 @@ class RxGuiNode(QtCore.QObject):
             t.disconnect_all()
 
 
+class TextItem(QtWidgets.QGraphicsTextItem):
+    def __init__(self, text, parent, on_update):
+        super().__init__(text, parent)
+        self.on_update = on_update
+
+    def focusOutEvent(self, ev):
+        super().focusOutEvent(ev)
+        if self.on_update is not None:
+            self.on_update()
+
+    def keyPressEvent(self, ev):
+        if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
+            if self.on_update is not None:
+                self.on_update()
+                return
+        super().keyPressEvent(ev)
+
+    def mousePressEvent(self, ev):
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
+            self.setFocus(QtCore.Qt.FocusReason.MouseFocusReason)  # focus text label
+
+
 class NodeGraphicsItem(GraphicsObject):
     def __init__(self, node):
         GraphicsObject.__init__(self)
         self.node = node
         self._node_type = node.node_type
-        flags = self.ItemIsMovable | self.ItemIsSelectable | self.ItemIsFocusable | self.ItemSendsGeometryChanges
+        flags = (
+            self.GraphicsItemFlag.ItemIsMovable
+            | self.GraphicsItemFlag.ItemIsSelectable
+            | self.GraphicsItemFlag.ItemIsFocusable
+            | self.GraphicsItemFlag.ItemSendsGeometryChanges
+        )
 
         self.set_color()
         self.setFlags(flags)
         self.bounds = QtCore.QRectF(0, 0, 125, 125)
-        self.nameItem = QtGui.QGraphicsTextItem(self.node.name, self)
+        self.nameItem = TextItem(self.node.name, self, self.label_changed)
         self.nameItem.setDefaultTextColor(QtGui.QColor(50, 50, 50))
         self.nameItem.moveBy(self.bounds.width() / 2.0 - self.nameItem.boundingRect().width() / 2.0, 0)
-        # if self._node_type not in ["actions", "observations", "render"]:
-        #     self.nameItem.setTextInteractionFlags(QtCore.Qt.TextEditorInteraction)
         self.update_terminals()
 
         self.nameItem.focusOutEvent = self.label_focus_out
@@ -285,7 +312,7 @@ class NodeGraphicsItem(GraphicsObject):
         self.label_changed()
 
     def label_key_press(self, ev):
-        if ev.key() == QtCore.Qt.Key_Enter or ev.key() == QtCore.Qt.Key_Return:
+        if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
             self.label_changed()
         else:
             QtGui.QGraphicsTextItem.keyPressEvent(self.nameItem, ev)
@@ -379,41 +406,41 @@ class NodeGraphicsItem(GraphicsObject):
         ev.ignore()
 
     def mouseClickEvent(self, ev):
-        if int(ev.button()) == int(QtCore.Qt.LeftButton):
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
             sel = self.isSelected()
             self.setSelected(True)
             if not sel and self.isSelected():
                 self.update()
 
-        elif int(ev.button()) == int(QtCore.Qt.RightButton):
+        elif ev.button() == QtCore.Qt.MouseButton.RightButton:
             self.menu = None
             self.buildMenu()
             ev.accept()
             self.raiseContextMenu(ev)
 
     def mouseDoubleClickEvent(self, ev):
-        if int(ev.button()) == int(QtCore.Qt.LeftButton):
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
             param_window = ParamWindow(node=self.node)
             param_window.open()
             param_window.close()
 
     def mouseDragEvent(self, ev):
-        if ev.button() == QtCore.Qt.LeftButton:
+        if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
             self.setPos(self.pos() + self.mapToParent(ev.pos()) - self.mapToParent(ev.lastPos()))
 
     def hoverEvent(self, ev):
-        if not ev.isExit() and ev.acceptClicks(QtCore.Qt.LeftButton):
-            ev.acceptDrags(QtCore.Qt.LeftButton)
+        if not ev.isExit() and ev.acceptClicks(QtCore.Qt.MouseButton.LeftButton):
+            ev.acceptDrags(QtCore.Qt.MouseButton.LeftButton)
             self.hovered = True
         else:
             self.hovered = False
         self.update()
 
     def keyPressEvent(self, ev):
-        if ev.key() == QtCore.Qt.Key_Delete or ev.key() == QtCore.Qt.Key_Backspace:
+        if ev.key() == QtCore.Qt.Key.Key_Delete or ev.key() == QtCore.Qt.Key.Key_Backspace:
             ev.accept()
             if not self.node.allow_remove:
                 return
@@ -423,7 +450,7 @@ class NodeGraphicsItem(GraphicsObject):
             ev.ignore()
 
     def itemChange(self, change, val):
-        if change == self.ItemPositionHasChanged:
+        if change == self.GraphicsItemChange.ItemPositionHasChanged:
             self.node.graph._state["gui_state"][self.node.name]["pos"] = [
                 self.pos().x(),
                 self.pos().y(),
