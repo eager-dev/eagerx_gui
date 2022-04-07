@@ -124,7 +124,10 @@ class RxGuiNode(QtCore.QObject):
                 continue
             d[new_name] = d[old_name]
             del d[old_name]
-
+        gui_state = self.graph._state["gui_state"][self.name]
+        if old_name in gui_state["linestyle"]:
+            gui_state["linestyle"][new_name] = gui_state["linestyle"][old_name]
+            gui_state["linestyle"].pop(old_name)
         self.graphics_item().update_terminals()
         self.sigTerminalRenamed.emit(term, old_name)
 

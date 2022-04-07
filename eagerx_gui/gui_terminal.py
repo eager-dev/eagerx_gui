@@ -224,6 +224,8 @@ class GuiTerminal(object):
                     color = QtGui.QColor(255, 0, 0)
                 else:
                     color = QtGui.QColor(128, 128, 128)
+            elif self.is_feedthrough:
+                color = QtGui.QColor(175,238,238)
             else:
                 color = QtGui.QColor(0, 0, 255)
         self.graphics_item().setBrush(QtGui.QBrush(color))
@@ -535,6 +537,15 @@ class ConnectionItem(GraphicsObject):
         start = Point(self.source.connect_point())
         if isinstance(self.target, TerminalGraphicsItem):
             stop = Point(self.target.connect_point())
+            input_term = self.target.term if self.source.term.is_input else self.source.term
+            node_name = input_term.node.name
+            linestyle_state = input_term.node.graph._state["gui_state"][node_name]["linestyle"]
+            if input_term.name in linestyle_state:
+                shape = linestyle_state[input_term.name]
+            else:
+                shape = "cubic"
+                linestyle_state[input_term.name] = shape
+            self.style["shape"] = shape
         elif isinstance(self.target, QtCore.QPointF):
             stop = Point(self.target)
         else:
@@ -569,12 +580,24 @@ class ConnectionItem(GraphicsObject):
         if ev.key() == QtCore.Qt.Key.Key_Delete or ev.key() == QtCore.Qt.Key.Key_Backspace:
             self.source.disconnect(self.target)
             ev.accept()
+            if isinstance(self.target, TerminalGraphicsItem):
+                # Remove linestyle from gui state on removal
+                input_term = self.target.term if self.source.term.is_input else self.source.term
+                node_name = input_term.node.name
+                if input_term.name in input_term.node.graph._state["gui_state"][node_name]["linestyle"]:
+                    input_term.node.graph._state["gui_state"][node_name]["linestyle"].pop(input_term.name)
         elif ev.key() == QtCore.Qt.Key.Key_Control:
             ev.accept()
             if self.style["shape"] == "line":
-                self.setStyle(shape="cubic")
+                shape = "cubic"
             elif self.style["shape"] == "cubic":
-                self.setStyle(shape="line")
+                shape = "line"
+            if isinstance(self.target, TerminalGraphicsItem):
+                # Update linestyle in gui state
+                input_term = self.target.term if self.source.term.is_input else self.source.term
+                node_name = input_term.node.name
+                input_term.node.graph._state["gui_state"][node_name]["linestyle"][input_term.name] = shape
+                self.setStyle(shape=shape)
         else:
             ev.ignore()
 

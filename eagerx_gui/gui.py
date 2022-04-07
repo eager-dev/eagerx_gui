@@ -5,7 +5,6 @@
 # -*- coding: utf-8 -*-
 import os
 import importlib
-import networkx as nx
 from copy import deepcopy
 from functools import partial
 
@@ -20,7 +19,7 @@ from pyqtgraph.debug import printExc
 from eagerx.core import constants
 from eagerx.core.graph import Graph
 from eagerx.core.entities import Node
-from eagerx_gui.utils import get_nodes_and_objects_library
+from eagerx_gui.utils import get_nodes_and_objects_library, add_pos_to_state, empty_gui_state
 from eagerx_gui import gui_view
 from eagerx_gui.gui_node import RxGuiNode, NodeGraphicsItem
 from eagerx_gui.gui_terminal import TerminalGraphicsItem, ConnectionItem
@@ -28,7 +27,6 @@ from eagerx_gui.pyqtgraph_utils import exception_handler, NodeCreationDialog
 
 # pyside and pyqt use incompatible ui files.
 rx_ui_template = importlib.import_module("eagerx_gui.templates.ui_{}".format(QT_LIB.lower()))
-
 
 class Gui(Graph, QtCore.QObject):
     library = get_nodes_and_objects_library()
@@ -49,39 +47,6 @@ class Gui(Graph, QtCore.QObject):
         self.widget()
         self.load_state(clear=True)
         self.viewBox.autoRange(padding=0.04)
-
-    @staticmethod
-    def add_pos_to_state(state):
-        # Position nodes using Fruchterman-Reingold force-directed algorithm.
-        G = nx.Graph()
-        fixed_positions = {}
-        for node, params in state["nodes"].items():
-            if node not in state["gui_state"]:
-                state["gui_state"][node] = Gui.empty_gui_state()  # Add gui states here.
-            gui_state = state["gui_state"][node]
-            if gui_state.get("pos", None) is not None and len(gui_state["pos"]) == 2:
-                fixed_positions[node] = gui_state["pos"]
-            elif params["config"]["name"] in [
-                "env/observations",
-                "env/actions",
-                "env/render",
-            ]:
-                if params["config"]["name"] == "env/actions":
-                    pos = [0, 0]
-                elif params["config"]["name"] == "env/observations":
-                    pos = [600, 0]
-                else:
-                    pos = [600, 150]
-                fixed_positions[node] = pos
-            G.add_node(node)
-        for source, target in state["connects"]:
-            source_name, _, _ = source
-            target_name, _, _ = target
-            G.add_edge(source_name, target_name)
-        position_dict = nx.spring_layout(G, k=150, pos=fixed_positions, fixed=fixed_positions.keys())
-        for node, pos in position_dict.items():
-            state["gui_state"][node]["pos"] = pos.tolist()
-        return state
 
     def create_node(self, name, pos):
         """Create a new Node and add it to this flowchart."""
@@ -108,10 +73,6 @@ class Gui(Graph, QtCore.QObject):
         node.sigClosed.connect(self.node_closed)
         node.sigRenamed.connect(self.node_renamed)
         self.sigChartChanged.emit(self, "add", node)
-
-    @staticmethod
-    def empty_gui_state():
-        return dict(pos=None)
 
     def remove_node(self, node):
         """Remove a Node from this flowchart."""
@@ -173,7 +134,7 @@ class Gui(Graph, QtCore.QObject):
             if "env/render" not in self._state["nodes"]:
                 render = Node.make("Render", rate=1.0)
                 self.add(render)
-            self.add_pos_to_state(self._state)
+            add_pos_to_state(self._state)
             nodes = self._state["nodes"]
             nodes = [dict(**node, name=name, gui_state=self._state["gui_state"][name]) for name, node in nodes.items()]
             nodes.sort(key=lambda a: a["gui_state"]["pos"][0])
@@ -532,7 +493,7 @@ class EagerxGraphWidget(dockarea.DockArea):
             name = mapping["name"]
         rx_entity = node_type["spec"](**mapping)
         self.chart.add(rx_entity)
-        self.chart._state["gui_state"][name] = Gui.empty_gui_state()
+        self.chart._state["gui_state"][name] = empty_gui_state()
         self.chart._state["gui_state"][name]["pos"] = pos
         self.chart.create_node(name, pos)
 

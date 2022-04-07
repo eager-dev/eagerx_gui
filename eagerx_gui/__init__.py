@@ -11,7 +11,7 @@ def launch_gui(state):
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()
-    win.setWindowTitle("pyqtgraph example: Flowchart")
+    win.setWindowTitle("EAGERx Graph")
     cw = QtWidgets.QWidget()
     win.setCentralWidget(cw)
     layout = QtWidgets.QGridLayout()
