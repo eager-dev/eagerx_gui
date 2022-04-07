@@ -17,6 +17,183 @@ from collections import OrderedDict
 
 translate = QtCore.QCoreApplication.translate
 
+class RxEngineGuiNode(QtCore.QObject):
+    sigClosed = QtCore.Signal(object)
+    sigRenamed = QtCore.Signal(object, object)
+    sigTerminalRenamed = QtCore.Signal(object, object)  # term, oldName
+    sigTerminalAdded = QtCore.Signal(object, object)  # self, term
+    sigTerminalRemoved = QtCore.Signal(object, object)  # self, term
+
+    def __init__(self, name, graph):
+        QtCore.QObject.__init__(self)
+        self.name = name
+        self._graphics_item = None
+        self.terminals = OrderedDict()
+        self.inputs = OrderedDict()
+        self.outputs = OrderedDict()
+        self.graph = graph
+        self.exception = None
+
+        self.allow_add_terminal = False
+        self.allow_remove = False
+        self.is_object = False
+
+        self.node_type = "engine_node"
+        self.__initialize_terminals()
+
+    def __next_terminal_name(self, name):
+        """Return an unused terminal name"""
+        name2 = name
+        i = 1
+        while name2 in self.terminals:
+            name2 = "%s_%d" % (name, i)
+            i += 1
+        return name2
+
+    def __initialize_terminals(self):
+        for terminal_type in set.union(constants.TERMS_IN, constants.TERMS_OUT):
+            if self.node_type == "render" and terminal_type == "outputs":
+                continue
+            if terminal_type in self.params():
+                for terminal in self.params()[terminal_type]:
+                    if self.node_type in ["actions", "observations"]:
+                        if terminal in self.default_params()[terminal_type]:
+                            continue
+                    name = terminal_type + "/" + terminal
+                    self.add_terminal(name=name)
+                    if self.node_type == "reset_node" and terminal_type == "outputs":
+                        name = "feedthroughs/" + terminal
+                        self.add_terminal(name=name)
+
+    def params(self):
+        return self._get_params(graph_backup=self.graph)
+
+    @exception_handler
+    def _get_params(self):
+        assert self.name in self.graph._state["nodes"], f" No entity with name '{self.name}' in graph."
+        return self.graph._state["nodes"][self.name]["config"]
+
+    def default_params(self):
+        return self.graph._state["backup"][self.name]
+
+    def set_param(self, parameter, value):
+        self._set_param(parameter, value, graph_backup=self.graph)
+
+    def get_view(self):
+        return self.graph.get_view(self.name, depth=["config"])
+
+    @exception_handler
+    def _set_param(self, parameter, value):
+        self.graph.set(value, self.get_view(), parameter=parameter)
+        if parameter == "color":
+            self.graphics_item().set_color()
+
+    def add_action(self):
+        name = self.__next_terminal_name("outputs/action")
+        self.graph._add_action(name.split("/")[-1])
+        self.add_terminal(name)
+
+    def add_observation(self):
+        name = self.__next_terminal_name("inputs/observation")
+        self.graph._add_observation(name.split("/")[-1])
+        self.add_terminal(name)
+
+    def add_terminal(self, name):
+        """Add a new terminal to this Node with the given name.
+
+        Causes sigTerminalAdded to be emitted."""
+        name = self.__next_terminal_name(name)
+
+        term = GuiTerminal(self, name)
+        self.terminals[name] = term
+
+        if term.is_input:
+            self.inputs[name] = term
+        else:
+            self.outputs[name] = term
+
+        self.graphics_item().update_terminals()
+        self.sigTerminalAdded.emit(self, term)
+        return term
+
+    def graphics_item(self):
+        """Return the GraphicsItem for this node."""
+        if self._graphics_item is None:
+            self._graphics_item = NodeGraphicsItem(self)
+        return self._graphics_item
+
+    def dependent_nodes(self):
+        """Return the list of nodes which provide direct input to this node"""
+        nodes = set()
+        for t in self.inputs.values():
+            nodes |= set([i.node for i in t.input_terminals()])
+        return nodes
+
+    def __repr__(self):
+        return "<Node %s @%x>" % (self.name, id(self))
+
+    def ctrl_widget(self):
+        """Return this Node's control widget.
+
+        By default, Nodes have no control widget. Subclasses may reimplement this
+        method to provide a custom widget. This method is called by Flowcharts
+        when they are constructing their Node list."""
+        return None
+
+    def connected(self, local_term, remote_term):
+        """Called whenever one of this node's terminals is connected elsewhere."""
+        pass
+
+    def disconnected(self, local_term, remote_term):
+        """Called whenever one of this node's terminals is disconnected from another."""
+        pass
+
+    def set_exception(self, exc):
+        self.exception = exc
+        self.recolor()
+
+    def clear_exception(self):
+        self.set_exception(None)
+
+    def recolor(self):
+        if self.exception is None:
+            self.graphics_item().setPen(QtGui.QPen(QtGui.QColor(0, 0, 0)))
+        else:
+            self.graphics_item().setPen(QtGui.QPen(QtGui.QColor(150, 0, 0), 3))
+
+    def load_state(self, state):
+        pos = state["gui_state"].get("pos", (0, 0))
+        self.graphics_item().setPos(*pos)
+
+    def save_terminals(self):
+        terms = OrderedDict()
+        for n, t in self.terminals.items():
+            terms[n] = t.save_state()
+        return terms
+
+    def clear_terminals(self):
+        for t in self.terminals.values():
+            t.close()
+        self.terminals = OrderedDict()
+        self.inputs = OrderedDict()
+        self.outputs = OrderedDict()
+
+    def close(self):
+        """Cleans up after the node--removes terminals, graphicsItem, widget"""
+        self.disconnect_all()
+        self.clear_terminals()
+        item = self.graphics_item()
+        if item.scene() is not None:
+            item.scene().removeItem(item)
+        self._graphics_item = None
+        w = self.ctrl_widget()
+        if w is not None:
+            w.setParent(None)
+        self.sigClosed.emit(self)
+
+    def disconnect_all(self):
+        for t in self.terminals.values():
+            t.disconnect_all()
 
 class RxGuiNode(QtCore.QObject):
     sigClosed = QtCore.Signal(object)
@@ -245,7 +422,6 @@ class RxGuiNode(QtCore.QObject):
         for t in self.terminals.values():
             t.disconnect_all()
 
-
 class TextItem(QtWidgets.QGraphicsTextItem):
     def __init__(self, text, parent, on_update):
         super().__init__(text, parent)
@@ -266,7 +442,6 @@ class TextItem(QtWidgets.QGraphicsTextItem):
     def mousePressEvent(self, ev):
         if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             self.setFocus(QtCore.Qt.FocusReason.MouseFocusReason)  # focus text label
-
 
 class NodeGraphicsItem(GraphicsObject):
     def __init__(self, node):
@@ -448,6 +623,9 @@ class NodeGraphicsItem(GraphicsObject):
             if not self.node.allow_remove:
                 return
             self.node.graph.remove(self.node.name, remove=False)
+            if self.node.name in self.node.graph._state["gui_state"]:
+                # Pop node from gui_state upon removal
+                self.node.graph._state["gui_state"].pop(self.node.name)
             self.node.close()
         else:
             ev.ignore()

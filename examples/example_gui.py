@@ -19,6 +19,7 @@ if __name__ == "__main__":
     name = gym_id.split("-")[0]
     obj = Object.make("GymObject", name, env_id=gym_id, rate=rate, default_action=0, render_shape=[300, 300])
 
+
     # Define graph
     graph = Graph.create(objects=[obj])
     graph.connect(source=obj.sensors.observation,   observation="observation",      window=1)

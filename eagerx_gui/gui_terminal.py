@@ -50,7 +50,7 @@ class GuiTerminal(object):
             "observations",
         ]
         self.is_renamable = self.node_type in ["actions", "observations"]
-        self.is_connectable = not (self.terminal_type == "states" and not node.is_object)
+        self.is_connectable = not (self.node_type == "engine_node" or (self.terminal_type == "states" and not node.is_object))
 
         self._graphicsItem = TerminalGraphicsItem(self, parent=self.node.graphics_item())
         self.recolor()
@@ -537,7 +537,7 @@ class ConnectionItem(GraphicsObject):
         start = Point(self.source.connect_point())
         if isinstance(self.target, TerminalGraphicsItem):
             stop = Point(self.target.connect_point())
-            input_term = self.target.term if self.source.term.is_input else self.source.term
+            input_term = self.target.term if self.target.term.is_input else self.source.term
             node_name = input_term.node.name
             linestyle_state = input_term.node.graph._state["gui_state"][node_name]["linestyle"]
             if input_term.name in linestyle_state:
@@ -578,11 +578,14 @@ class ConnectionItem(GraphicsObject):
             return
 
         if ev.key() == QtCore.Qt.Key.Key_Delete or ev.key() == QtCore.Qt.Key.Key_Backspace:
+            if self.source.term.node_type == "engine_node":
+                ev.ignore()
+                return
             self.source.disconnect(self.target)
             ev.accept()
             if isinstance(self.target, TerminalGraphicsItem):
                 # Remove linestyle from gui state on removal
-                input_term = self.target.term if self.source.term.is_input else self.source.term
+                input_term = self.target.term if self.target.term.is_input else self.source.term
                 node_name = input_term.node.name
                 if input_term.name in input_term.node.graph._state["gui_state"][node_name]["linestyle"]:
                     input_term.node.graph._state["gui_state"][node_name]["linestyle"].pop(input_term.name)
@@ -594,7 +597,7 @@ class ConnectionItem(GraphicsObject):
                 shape = "line"
             if isinstance(self.target, TerminalGraphicsItem):
                 # Update linestyle in gui state
-                input_term = self.target.term if self.source.term.is_input else self.source.term
+                input_term = self.target.term if self.target.term.is_input else self.source.term
                 node_name = input_term.node.name
                 input_term.node.graph._state["gui_state"][node_name]["linestyle"][input_term.name] = shape
                 self.setStyle(shape=shape)

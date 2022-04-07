@@ -286,6 +286,10 @@ class ParamWindow(QtGui.QDialog):
         self.layout.addWidget(label, row, 0)
         self.layout.addWidget(widget, row, 1)
         self.labels.append(label)
+
+        # Nodes in in the EngineGraph Gui cannot be modified
+        if self.node_type == "engine_node":
+            widget.setEnabled(False)
         self.widgets.append(widget)
 
     def combo_box_value_changed(self, int, items, key, item_converter=None):

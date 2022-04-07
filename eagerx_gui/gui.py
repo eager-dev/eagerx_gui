@@ -18,15 +18,170 @@ from pyqtgraph.debug import printExc
 # Import eagerx modules
 from eagerx.core import constants
 from eagerx.core.graph import Graph
+from eagerx.core.graph_engine import EngineGraph
 from eagerx.core.entities import Node
-from eagerx_gui.utils import get_nodes_and_objects_library, add_pos_to_state, empty_gui_state
+from eagerx_gui.utils import get_nodes_and_objects_library, add_pos_to_state, add_pos_to_engine_state, empty_gui_state
 from eagerx_gui import gui_view
-from eagerx_gui.gui_node import RxGuiNode, NodeGraphicsItem
+from eagerx_gui.gui_node import RxGuiNode, RxEngineGuiNode, NodeGraphicsItem
 from eagerx_gui.gui_terminal import TerminalGraphicsItem, ConnectionItem
 from eagerx_gui.pyqtgraph_utils import exception_handler, NodeCreationDialog
 
 # pyside and pyqt use incompatible ui files.
 rx_ui_template = importlib.import_module("eagerx_gui.templates.ui_{}".format(QT_LIB.lower()))
+rx_engine_ui_template = importlib.import_module("eagerx_gui.templates.engine_ui_{}".format(QT_LIB.lower()))
+
+class EngineGui(EngineGraph, QtCore.QObject):
+    library = get_nodes_and_objects_library()
+    sigFileLoaded = QtCore.Signal(object)
+    sigFileSaved = QtCore.Signal(object)
+    sigChartLoaded = QtCore.Signal()
+    sigStateChanged = QtCore.Signal()  # called when output is expected to have changed
+    sigChartChanged = QtCore.Signal(object, object, object)  # called when nodes are added, removed, or renamed.
+
+    def __init__(self, state):
+        EngineGraph.__init__(self, state=state)
+        QtCore.QObject.__init__(self)
+        self.nodes = {}
+        self.next_z_val = 10
+        self._widget = None
+        self.scene = None
+        self.file_path = None
+        self.widget()
+        self.load_state(clear=True)
+        self.viewBox.autoRange(padding=0.04)
+
+    def create_node(self, name, pos):
+        """Create a new Node and add it to this flowchart."""
+        node = RxEngineGuiNode(name, graph=self)
+        self.add_node(node, name, pos)
+        return node
+
+    def add_node(self, node, name, pos=None):
+        """Add an existing Node to this flowchart.
+
+        See also: createnode
+        """
+        if pos is None:
+            pos = [0, 0]
+        if type(pos) in [QtCore.QPoint, QtCore.QPointF]:
+            pos = [pos.x(), pos.y()]
+        item = node.graphics_item()
+        item.setZValue(self.next_z_val * 2)
+        self.next_z_val += 1
+        self.viewBox.addItem(item)
+        item.moveBy(*pos)
+        self.nodes[name] = node
+        self.widget().add_node(node)
+        node.sigClosed.connect(self.node_closed)
+        node.sigRenamed.connect(self.node_renamed)
+        self.sigChartChanged.emit(self, "add", node)
+
+    def remove_node(self, node):
+        """Remove a Node from this flowchart."""
+        node.close()
+
+    def node_closed(self, node):
+        del self.nodes[node.name]
+        self.widget().remove_node(node)
+        for signal in ["sigClosed", "sigRenamed"]:
+            try:
+                getattr(node, signal).disconnect(self.node_closed)
+            except (TypeError, RuntimeError):
+                pass
+        self.sigChartChanged.emit(self, "remove", node)
+
+    def node_renamed(self, node, old_name):
+        NotImplementedError("You cannot rename entities once added.")
+
+    def connect_terminals(self, term1, term2):
+        """Connect two terminals together within this flowchart."""
+        connection_item = ConnectionItem(term1.graphics_item(), term2.graphics_item())
+        term1.graphics_item().getViewBox().addItem(connection_item)
+
+        term1.connections[term2] = connection_item
+        term2.connections[term1] = connection_item
+
+        term1.connected(term2)
+        term2.connected(term1)
+
+    def chart_graphics_item(self):
+        """Return the graphicsItem that displays the internal nodes and
+        connections of this flowchart.
+
+        Note that the similar method `graphicsItem()` is inherited from Node
+        and returns the *external* graphical representation of this flowchart."""
+        return self.viewBox
+
+    def widget(self):
+        """Return the control widget for this flowchart.
+
+        This widget provides GUI access to the parameters for each node and a
+        graphical representation of the flowchart.
+        """
+        if self._widget is None:
+            self._widget = EngineCtrlWidget(self)
+            self.scene = self._widget.scene
+            self.viewBox = self._widget.viewBox()
+        return self._widget
+
+    def load_state(self, clear=False):
+        self.blockSignals(True)
+        try:
+            if clear:
+                self.clear()
+            add_pos_to_engine_state(self._state)
+            nodes = self._state["nodes"]
+            nodes = [dict(**node, name=name, gui_state=self._state["gui_state"][name]) for name, node in nodes.items()]
+            nodes.sort(key=lambda a: a["gui_state"]["pos"][0])
+            for n in nodes:
+                if n["name"] in self.nodes:
+                    self.nodes[n["name"]].load_state(n)
+                    continue
+                try:
+                    name = n["name"]
+                    pos = n["gui_state"]["pos"]
+                    node = self.create_node(name, pos)
+                    node.load_state(n)
+                except Exception:
+                    printExc("Error creating node %s: (continuing anyway)" % n["name"])
+
+            connects = [
+                (
+                    connection[0][0],
+                    "/".join(connection[0][1:3]),
+                    connection[1][0],
+                    "/".join(connection[1][1:3]),
+                )
+                for connection in self._state["connects"]
+            ]
+            for n1, t1, n2, t2 in connects:
+                try:
+                    self.connect_terminals(self.nodes[n1].terminals[t1], self.nodes[n2].terminals[t2])
+                except Exception:
+                    print(self.nodes[n1].terminals)
+                    print(self.nodes[n2].terminals)
+                    printExc("Error connecting terminals %s.%s - %s.%s:" % (n1, t1, n2, t2))
+
+        finally:
+            self.blockSignals(False)
+
+        self.sigChartLoaded.emit()
+        self.sigStateChanged.emit()
+
+    def state(self):
+        return deepcopy(self._state)
+
+    def clear(self):
+        """Remove all nodes from this flowchart except the original input/output nodes."""
+        for n in list(self.nodes.values()):
+            n.close()  # calls self.nodeClosed(n) by signal
+        self.widget().clear()
+
+    def tuple_to_view(self, t):
+        if isinstance(t, tuple):
+            t = list(t)
+        return self.get_view(t[0], depth=t[1:])
+
 
 class Gui(Graph, QtCore.QObject):
     library = get_nodes_and_objects_library()
@@ -247,6 +402,97 @@ class GraphicsItem(GraphicsObject):
 
     def paint(self, p, *args):
         pass
+
+
+class EngineCtrlWidget(QtWidgets.QWidget):
+    """The widget that contains the list of all the nodes in a flowchart and their controls, as well as buttons for
+    loading/saving flowcharts."""
+
+    def __init__(self, chart):
+        self.items = {}
+        self.current_file_name = None
+        QtWidgets.QWidget.__init__(self)
+        self.chart = chart
+        self.ui = rx_engine_ui_template.Ui_Form()
+        self.ui.setupUi(self)
+        self.ui.ctrlList.setColumnCount(2)
+        self.ui.ctrlList.setColumnWidth(1, 20)
+        self.ui.ctrlList.setVerticalScrollMode(self.ui.ctrlList.ScrollMode.ScrollPerPixel)
+        self.ui.ctrlList.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        self.chartWidget = EagerxGraphWidget(chart, self)
+        self.scene = self.chartWidget.scene
+        self.cwWin = QtWidgets.QMainWindow()
+        self.cwWin.setWindowTitle("EAGERx EngineGraph")
+        self.cwWin.setCentralWidget(self.chartWidget)
+        self.cwWin.resize(1000, 800)
+
+        h = self.ui.ctrlList.header()
+        h.setSectionResizeMode(0, h.ResizeMode.Stretch)
+
+        self.ui.ctrlList.itemChanged.connect(self.itemChanged)
+        self.ui.showChartBtn.toggled.connect(self.chart_toggled)
+        self.ui.checkValidityBtn.clicked.connect(self.check_validity_toggled)
+
+        self.chart.sigFileLoaded.connect(self.set_current_file)
+
+    def chart_toggled(self, b):
+        if b:
+            self.cwWin.show()
+        else:
+            self.cwWin.hide()
+
+    def check_validity_toggled(self):
+        try:
+            self._check_validity(graph_backup=self.chart, dialog_title="Invalid Graph")
+            self.ui.checkValidityBtn.success("Valid")
+        except Exception:
+            self.ui.checkValidityBtn.failure("Invalid")
+
+    @exception_handler
+    def _check_validity(self):
+        self.chart._is_valid(state=self.chart.state())
+
+    def set_current_file(self, file_name):
+        self.current_file_name = file_name
+        if file_name is None:
+            self.ui.fileNameLabel.setText("<b>[ new ]</b>")
+        else:
+            self.ui.fileNameLabel.setText("<b>%s</b>" % os.path.split(self.current_file_name)[1])
+        self.resizeEvent(None)
+
+    def itemChanged(self, *args):
+        pass
+
+    def viewBox(self):
+        return self.chartWidget.viewBox()
+
+    def add_node(self, node):
+        ctrl = node.ctrl_widget()
+        item = QtWidgets.QTreeWidgetItem([node.name, "", ""])
+        self.ui.ctrlList.addTopLevelItem(item)
+
+        if ctrl is not None:
+            item2 = QtWidgets.QTreeWidgetItem()
+            item.addChild(item2)
+            self.ui.ctrlList.setItemWidget(item2, 0, ctrl)
+
+        self.items[node] = item
+
+    def remove_node(self, node):
+        if node in self.items:
+            item = self.items[node]
+            self.ui.ctrlList.removeTopLevelItem(item)
+
+    def clear(self):
+        self.chartWidget.clear()
+
+    def select(self, node):
+        item = self.items[node]
+        self.ui.ctrlList.setCurrentItem(item)
+
+    def clearSelection(self):
+        self.ui.ctrlList.selectionModel().clearSelection()
 
 
 class CtrlWidget(QtWidgets.QWidget):
