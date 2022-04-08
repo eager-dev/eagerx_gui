@@ -7,7 +7,7 @@ from pyqtgraph.graphicsItems.GraphicsObject import GraphicsObject
 from pyqtgraph import functions as fn
 from pyqtgraph.Point import Point
 
-from eagerx.core import constants
+from eagerx_gui import configuration
 from eagerx_gui.pyqtgraph_utils import (
     exception_handler,
     ConnectionDialog,
@@ -20,8 +20,6 @@ from eagerx.utils.utils import (
     get_attribute_from_module,
 )
 from eagerx.core.converters import Identity
-from eagerx.core.specs import EntitySpec
-from eagerx.core.view import SpecView
 
 
 class GuiTerminal(object):
@@ -37,12 +35,12 @@ class GuiTerminal(object):
         self.terminal_type = name_split[0]
         self.terminal_name = name_split[-1]
 
-        assert self.terminal_type in set.union(constants.TERMS_IN, constants.TERMS_OUT), (
+        assert self.terminal_type in set.union(configuration.TERMS_IN, configuration.TERMS_OUT), (
             f"Invalid terminal type: {self.terminal_type}, "
-            f"should be one of {set.union(constants.TERMS_IN, constants.TERMS_OUT)}"
+            f"should be one of {set.union(configuration.TERMS_IN, configuration.TERMS_OUT)}"
         )
 
-        self.is_input = self.terminal_type in constants.TERMS_IN
+        self.is_input = self.terminal_type in configuration.TERMS_IN
         self.is_state = self.terminal_type in ["targets", "states"]
         self.is_feedthrough = self.terminal_type == "feedthroughs"
         self.is_removable = node.is_object or self.node_type in [
@@ -50,7 +48,7 @@ class GuiTerminal(object):
             "observations",
         ]
         self.is_renamable = self.node_type in ["actions", "observations"]
-        self.is_connectable = not (self.terminal_type == "states" and not node.is_object)
+        self.is_connectable = not (self.node_type == "engine_node" or (self.terminal_type == "states" and not node.is_object))
 
         self._graphicsItem = TerminalGraphicsItem(self, parent=self.node.graphics_item())
         self.recolor()
@@ -224,6 +222,8 @@ class GuiTerminal(object):
                     color = QtGui.QColor(255, 0, 0)
                 else:
                     color = QtGui.QColor(128, 128, 128)
+            elif self.is_feedthrough:
+                color = QtGui.QColor(175, 238, 238)
             else:
                 color = QtGui.QColor(0, 0, 255)
         self.graphics_item().setBrush(QtGui.QBrush(color))
@@ -289,7 +289,7 @@ class TerminalGraphicsItem(GraphicsObject):
         self.term = term
         GraphicsObject.__init__(self, parent)
         self.brush = fn.mkBrush(0, 0, 0)
-        self.box = QtGui.QGraphicsRectItem(0, 0, 10, 10, self)
+        self.box = QtWidgets.QGraphicsRectItem(0, 0, 10, 10, self)
         on_update = self.label_changed if self.term.is_renamable else None
         self.label = TextItem(self.term.terminal_name, self, on_update)
         self.label.setScale(0.7)
@@ -303,14 +303,14 @@ class TerminalGraphicsItem(GraphicsObject):
         self.menu = None
 
     def label_focus_out(self, ev):
-        QtGui.QGraphicsTextItem.focusOutEvent(self.label, ev)
+        QtWidgets.QGraphicsTextItem.focusOutEvent(self.label, ev)
         self.label_changed()
 
     def label_key_press(self, ev):
         if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
             self.label_changed()
         else:
-            QtGui.QGraphicsTextItem.keyPressEvent(self.label, ev)
+            QtWidgets.QGraphicsTextItem.keyPressEvent(self.label, ev)
 
     def label_changed(self):
         new_name = str(self.label.toPlainText())
@@ -398,7 +398,7 @@ class TerminalGraphicsItem(GraphicsObject):
         menu.popup(QtCore.QPoint(pos.x(), pos.y()))
 
     def get_menu(self):
-        self.menu = QtGui.QMenu()
+        self.menu = QtWidgets.QMenu()
         self.menu.setTitle("Terminal")
         rem_act = QtGui.QAction("Remove {}".format(self.term.terminal_name), self.menu)
         rem_act.triggered.connect(self.remove_self)
@@ -535,6 +535,15 @@ class ConnectionItem(GraphicsObject):
         start = Point(self.source.connect_point())
         if isinstance(self.target, TerminalGraphicsItem):
             stop = Point(self.target.connect_point())
+            input_term = self.target.term if self.target.term.is_input else self.source.term
+            node_name = input_term.node.name
+            linestyle_state = input_term.node.graph._state["gui_state"][node_name]["linestyle"]
+            if input_term.name in linestyle_state:
+                shape = linestyle_state[input_term.name]
+            else:
+                shape = "cubic"
+                linestyle_state[input_term.name] = shape
+            self.style["shape"] = shape
         elif isinstance(self.target, QtCore.QPointF):
             stop = Point(self.target)
         else:
@@ -567,14 +576,29 @@ class ConnectionItem(GraphicsObject):
             return
 
         if ev.key() == QtCore.Qt.Key.Key_Delete or ev.key() == QtCore.Qt.Key.Key_Backspace:
+            if self.source.term.node_type == "engine_node":
+                ev.ignore()
+                return
             self.source.disconnect(self.target)
             ev.accept()
+            if isinstance(self.target, TerminalGraphicsItem):
+                # Remove linestyle from gui state on removal
+                input_term = self.target.term if self.target.term.is_input else self.source.term
+                node_name = input_term.node.name
+                if input_term.name in input_term.node.graph._state["gui_state"][node_name]["linestyle"]:
+                    input_term.node.graph._state["gui_state"][node_name]["linestyle"].pop(input_term.name)
         elif ev.key() == QtCore.Qt.Key.Key_Control:
             ev.accept()
             if self.style["shape"] == "line":
-                self.setStyle(shape="cubic")
+                shape = "cubic"
             elif self.style["shape"] == "cubic":
-                self.setStyle(shape="line")
+                shape = "line"
+            if isinstance(self.target, TerminalGraphicsItem):
+                # Update linestyle in gui state
+                input_term = self.target.term if self.target.term.is_input else self.source.term
+                node_name = input_term.node.name
+                input_term.node.graph._state["gui_state"][node_name]["linestyle"][input_term.name] = shape
+                self.setStyle(shape=shape)
         else:
             ev.ignore()
 

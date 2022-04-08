@@ -1,32 +1,20 @@
 import yaml
 import inspect
-import ast
+
 from functools import wraps, partial
 from copy import deepcopy
 
 from pyqtgraph import ComboBox, SpinBox
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtWidgets
 
-from eagerx.core import constants
+from eagerx_gui import configuration
+from eagerx_gui.utils import tryeval
 from eagerx.utils.utils import (
     get_attribute_from_module,
     get_module_type_string,
     get_opposite_msg_cls,
 )
 from eagerx.core.register import REVERSE_REGISTRY
-
-
-def tryeval(val):
-    try:
-        val = ast.literal_eval(val)
-    except Exception as e:
-        if isinstance(e, ValueError):
-            pass
-        elif isinstance(e, SyntaxError):
-            pass
-        else:
-            raise
-    return val
 
 
 def exception_handler(function_to_decorate):
@@ -40,10 +28,10 @@ def exception_handler(function_to_decorate):
         except Exception as e:
             graph_backup._state = state_copy
             graph_backup.load_state(clear=True)
-            error_window = QtGui.QDialog(graph_backup.widget().cwWin)
+            error_window = QtWidgets.QDialog(graph_backup.widget().cwWin)
             error_window.setWindowTitle(dialog_title)
-            layout = QtGui.QGridLayout()
-            label = QtGui.QLabel(str(e))
+            layout = QtWidgets.QGridLayout()
+            label = QtWidgets.QLabel(str(e))
             layout.addWidget(label)
             error_window.setLayout(layout)
             error_window.exec()
@@ -52,7 +40,7 @@ def exception_handler(function_to_decorate):
     return exception_handler_wrapper
 
 
-class NodeCreationDialog(QtGui.QDialog):
+class NodeCreationDialog(QtWidgets.QDialog):
     def __init__(self, name, node_type, parent):
         super().__init__(parent)
         self.setWindowTitle("Create {}".format(name))
@@ -62,7 +50,7 @@ class NodeCreationDialog(QtGui.QDialog):
         signature = node_type["entity_cls"].get_spec(node_type["entity_id"], verbose=False)
         parameters = signature.parameters
 
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.labels = []
         self.widgets = []
         row = 0
@@ -76,7 +64,7 @@ class NodeCreationDialog(QtGui.QDialog):
             else:
                 optional_args[key] = parameters[key]
 
-        required_args_label = QtGui.QLabel("Required Arguments")
+        required_args_label = QtWidgets.QLabel("Required Arguments")
         self.layout.addWidget(required_args_label, row, 0)
         self.labels.append(required_args_label)
         row += 1
@@ -91,7 +79,7 @@ class NodeCreationDialog(QtGui.QDialog):
             self.add_widget(key, value, parameter, row)
             row += 1
 
-        optional_args_label = QtGui.QLabel("Optional Arguments")
+        optional_args_label = QtWidgets.QLabel("Optional Arguments")
         self.layout.addWidget(optional_args_label, row, 0)
         self.labels.append(optional_args_label)
         row += 1
@@ -108,7 +96,7 @@ class NodeCreationDialog(QtGui.QDialog):
         return self.mapping
 
     def add_widget(self, key, value, parameter, row):
-        label = QtGui.QLabel(str(parameter).split("=")[0].strip())
+        label = QtWidgets.QLabel(str(parameter).split("=")[0].strip())
         if parameter.annotation is bool:
             value = value if value is not None else True
             items = ["True", "False"]
@@ -122,7 +110,7 @@ class NodeCreationDialog(QtGui.QDialog):
             widget = SpinBox(value=value, dec=True)
             widget.sigValueChanged.connect(partial(self.value_changed, key=key))
         elif parameter.annotation is str:
-            widget = QtGui.QLineEdit(str(value))
+            widget = QtWidgets.QLineEdit(str(value))
             widget.textChanged.connect(partial(self.text_changed, key=key))
         elif isinstance(value, bool):
             items = ["True", "False"]
@@ -135,7 +123,7 @@ class NodeCreationDialog(QtGui.QDialog):
             widget = SpinBox(value=value, dec=True)
             widget.sigValueChanged.connect(partial(self.value_changed, key=key))
         else:
-            widget = QtGui.QLineEdit(str(value))
+            widget = QtWidgets.QLineEdit(str(value))
             widget.textChanged.connect(partial(self.text_changed, key=key))
         self.mapping[key] = value
         for grid_object in [label, widget]:
@@ -162,7 +150,7 @@ class NodeCreationDialog(QtGui.QDialog):
         self.mapping[key] = tryeval(text)
 
 
-class ParamWindow(QtGui.QDialog):
+class ParamWindow(QtWidgets.QDialog):
     def __init__(self, node, term=None):
         self.parent = node.graph.widget().cwWin
         super().__init__(self.parent)
@@ -176,30 +164,39 @@ class ParamWindow(QtGui.QDialog):
         name = term.terminal_name if self.is_term else node.name
         self.setWindowTitle("Parameters {}".format(name))
 
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.labels = []
         self.widgets = []
         self.params_changed = {}
         row = 0
+
+        self.gui_widgets = configuration.ENGINE_GUI_WIDGETS if self.node_type == "engine_node" else configuration.GUI_WIDGETS
         for key, value in self.entity.params().items():
-            if key in constants.GUI_WIDGETS[self.entity_type]["hide"]["all"]:
+            if key in self.gui_widgets[self.entity_type]["hide"]["all"]:
                 continue
             elif (
-                self.node_type in constants.GUI_WIDGETS[self.entity_type]["hide"]
-                and key in constants.GUI_WIDGETS[self.entity_type]["hide"][self.node_type]
+                self.node_type in self.gui_widgets[self.entity_type]["hide"]
+                and key in self.gui_widgets[self.entity_type]["hide"][self.node_type]
             ):
                 continue
             elif (
                 self.is_term
-                and self.entity.terminal_type in constants.GUI_WIDGETS[self.entity_type]["hide"]
-                and key in constants.GUI_WIDGETS[self.entity_type]["hide"][self.entity.terminal_type]
+                and self.entity.terminal_type in self.gui_widgets[self.entity_type]["hide"]
+                and key in self.gui_widgets[self.entity_type]["hide"][self.entity.terminal_type]
+            ):
+                continue
+            elif (
+                self.node_type == "engine_node"
+                and self.is_term
+                and self.entity.node.name == "sensors"
+                and key == "external_rate"
             ):
                 continue
             else:
                 self.add_widget(key, value, row)
                 row += 1
         if row == 0:
-            label = QtGui.QLabel("No parameters to show.")
+            label = QtWidgets.QLabel("No parameters to show.")
             self.layout.addWidget(label, row, 0)
         self.setLayout(self.layout)
 
@@ -221,15 +218,15 @@ class ParamWindow(QtGui.QDialog):
             self.entity.set_param(key, value)
 
     def add_widget(self, key, value, row):
-        label = QtGui.QLabel(key)
+        label = QtWidgets.QLabel(key)
         if self.is_term and key in "converter":
             button_string = value["converter_type"].split("/")[-1] if "converter_type" in value else "converter"
-            widget = QtGui.QPushButton("Edit {}".format(button_string))
+            widget = QtWidgets.QPushButton("Edit {}".format(button_string))
             widget.pressed.connect(partial(self.open_converter_dialog, button=widget))
         elif self.is_term and key == "space_converter":
             if self.entity.is_state:
                 button_string = value["converter_type"].split("/")[-1] if "converter_type" in value else "space_converter"
-                widget = QtGui.QPushButton("Edit {}".format(button_string))
+                widget = QtWidgets.QPushButton("Edit {}".format(button_string))
                 widget.pressed.connect(
                     partial(
                         self.open_converter_dialog,
@@ -238,10 +235,10 @@ class ParamWindow(QtGui.QDialog):
                     )
                 )
             else:
-                widget = QtGui.QLineEdit(str(value))
+                widget = QtWidgets.QLineEdit(str(value))
                 widget.setEnabled(False)
-        elif key in constants.GUI_WIDGETS[self.entity_type]["items"]:
-            items = constants.GUI_WIDGETS[self.entity_type]["items"][key]
+        elif key in self.gui_widgets[self.entity_type]["items"]:
+            items = self.gui_widgets[self.entity_type]["items"][key]
             if isinstance(items, dict):
                 item_converter = items
                 index, items = list(items.values()).index(value), list(items.keys())
@@ -268,11 +265,11 @@ class ParamWindow(QtGui.QDialog):
             widget = SpinBox(value=value, dec=True)
             widget.sigValueChanged.connect(partial(self.value_changed, key=key))
         else:
-            widget = QtGui.QLineEdit(str(value))
+            widget = QtWidgets.QLineEdit(str(value))
             widget.textChanged.connect(partial(self.text_changed, key=key))
-        if key in constants.GUI_WIDGETS[self.entity_type]["constant"]["all"] or (
-            self.node_type in constants.GUI_WIDGETS[self.entity_type]["constant"]
-            and key in constants.GUI_WIDGETS[self.entity_type]["constant"][self.node_type]
+        if key in self.gui_widgets[self.entity_type]["constant"]["all"] or (
+            self.node_type in self.gui_widgets[self.entity_type]["constant"]
+            and key in self.gui_widgets[self.entity_type]["constant"][self.node_type]
         ):
             widget.setEnabled(False)
         for grid_object in [label, widget]:
@@ -286,6 +283,10 @@ class ParamWindow(QtGui.QDialog):
         self.layout.addWidget(label, row, 0)
         self.layout.addWidget(widget, row, 1)
         self.labels.append(label)
+
+        # Nodes in in the EngineGraph Gui cannot be modified
+        if self.node_type == "engine_node" and self.entity.name:
+            widget.setEnabled(False)
         self.widgets.append(widget)
 
     def combo_box_value_changed(self, int, items, key, item_converter=None):
@@ -327,7 +328,7 @@ class ParamWindow(QtGui.QDialog):
         button.setText("Edit {}".format(button_string))
 
 
-class ConverterDialog(QtGui.QDialog):
+class ConverterDialog(QtWidgets.QDialog):
     def __init__(
         self,
         converter,
@@ -345,7 +346,7 @@ class ConverterDialog(QtGui.QDialog):
         self.converter = converter
         self.library = library
         self.setWindowTitle("Converter Parameters")
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.labels = []
         self.widgets = []
 
@@ -378,10 +379,10 @@ class ConverterDialog(QtGui.QDialog):
                 get_attribute_from_module(self.converter["converter_type"])
                 valid = True
             except Exception as e:
-                error_window = QtGui.QDialog(self.parent)
+                error_window = QtWidgets.QDialog(self.parent)
                 error_window.setWindowTitle("Invalid Converter")
-                layout = QtGui.QGridLayout()
-                label = QtGui.QLabel(str(e))
+                layout = QtWidgets.QGridLayout()
+                label = QtWidgets.QLabel(str(e))
                 layout.addWidget(label)
                 error_window.setLayout(layout)
                 error_window.exec()
@@ -390,7 +391,7 @@ class ConverterDialog(QtGui.QDialog):
 
     def add_argument_widgets(self, required_args, optional_args):
         row = 1
-        required_args_label = QtGui.QLabel("Required Converter Arguments")
+        required_args_label = QtWidgets.QLabel("Required Converter Arguments")
         self.layout.addWidget(required_args_label, row, 0)
         self.labels.append(required_args_label)
         row += 1
@@ -403,7 +404,7 @@ class ConverterDialog(QtGui.QDialog):
             self.add_widget(key, value, parameter, row)
             row += 1
 
-        optional_args_label = QtGui.QLabel("Optional Converter Arguments")
+        optional_args_label = QtWidgets.QLabel("Optional Converter Arguments")
         self.layout.addWidget(optional_args_label, row, 0)
         self.labels.append(optional_args_label)
         row += 1
@@ -489,9 +490,9 @@ class ConverterDialog(QtGui.QDialog):
 
     def add_widget(self, key, value, parameter, row, items=None):
         if parameter is not None:
-            label = QtGui.QLabel(str(parameter).split("=")[0].strip())
+            label = QtWidgets.QLabel(str(parameter).split("=")[0].strip())
         else:
-            label = QtGui.QLabel(str(key))
+            label = QtWidgets.QLabel(str(key))
         if parameter is None:
             widget = ComboBox(items=items, default=value)
             widget.activated.connect(partial(self.class_changed, items=items))
@@ -512,10 +513,10 @@ class ConverterDialog(QtGui.QDialog):
             widget = SpinBox(value=value, dec=True)
             widget.sigValueChanged.connect(partial(self.value_changed, key=key))
         elif parameter.annotation is str:
-            widget = QtGui.QLineEdit(str(value))
+            widget = QtWidgets.QLineEdit(str(value))
             widget.textChanged.connect(partial(self.text_changed, key=key))
         else:
-            widget = QtGui.QLineEdit(str(value))
+            widget = QtWidgets.QLineEdit(str(value))
             widget.textChanged.connect(partial(self.argument_changed, key=key))
 
         self.layout.addWidget(label, row, 0)
@@ -548,7 +549,7 @@ class ConverterDialog(QtGui.QDialog):
         self.params[key] = tryeval(text)
 
 
-class ConnectionDialog(QtGui.QDialog):
+class ConnectionDialog(QtWidgets.QDialog):
     def __init__(self, input_term, output_term, **kwargs):
         self.parent = input_term.node.graph.widget().cwWin
         super().__init__(self.parent)
@@ -556,7 +557,7 @@ class ConnectionDialog(QtGui.QDialog):
         self.library = input_term.node.graph.library
         self.input_term = input_term
         self.output_term = output_term
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.params = {}
         self.labels = []
         self.widgets = []
@@ -579,10 +580,10 @@ class ConnectionDialog(QtGui.QDialog):
         return self.params
 
     def add_widget(self, key, value, row):
-        label = QtGui.QLabel(key)
+        label = QtWidgets.QLabel(key)
         if key == "converter":
             button_string = value["converter_type"].split("/")[-1] if "converter_type" in value else "converter"
-            widget = QtGui.QPushButton("Edit {}".format(button_string))
+            widget = QtWidgets.QPushButton("Edit {}".format(button_string))
             widget.pressed.connect(partial(self.open_converter_dialog, button=widget))
         elif isinstance(value, bool):
             items = ["True", "False"]
@@ -595,7 +596,7 @@ class ConnectionDialog(QtGui.QDialog):
             widget = SpinBox(value=value)
             widget.sigValueChanged.connect(partial(self.value_changed, key=key))
         else:
-            widget = QtGui.QLineEdit(str(value))
+            widget = QtWidgets.QLineEdit(str(value))
             widget.textChanged.connect(partial(self.text_changed, key=key))
         for grid_object in [label, widget]:
             font = grid_object.font()

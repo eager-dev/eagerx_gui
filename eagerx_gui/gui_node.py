@@ -5,7 +5,7 @@
 import numpy as np
 from functools import partial
 
-from eagerx.core import constants
+from eagerx_gui import configuration
 from eagerx_gui.utils import get_yaml_type
 from eagerx_gui.gui_terminal import GuiTerminal
 from eagerx_gui.pyqtgraph_utils import exception_handler, ParamWindow
@@ -16,6 +16,185 @@ from pyqtgraph import functions as fn
 from collections import OrderedDict
 
 translate = QtCore.QCoreApplication.translate
+
+
+class RxEngineGuiNode(QtCore.QObject):
+    sigClosed = QtCore.Signal(object)
+    sigRenamed = QtCore.Signal(object, object)
+    sigTerminalRenamed = QtCore.Signal(object, object)  # term, oldName
+    sigTerminalAdded = QtCore.Signal(object, object)  # self, term
+    sigTerminalRemoved = QtCore.Signal(object, object)  # self, term
+
+    def __init__(self, name, graph):
+        QtCore.QObject.__init__(self)
+        self.name = name
+        self._graphics_item = None
+        self.terminals = OrderedDict()
+        self.inputs = OrderedDict()
+        self.outputs = OrderedDict()
+        self.graph = graph
+        self.exception = None
+
+        self.allow_add_terminal = False
+        self.allow_remove = False
+        self.is_object = False
+
+        self.node_type = "engine_node"
+        self.__initialize_terminals()
+
+    def __next_terminal_name(self, name):
+        """Return an unused terminal name"""
+        name2 = name
+        i = 1
+        while name2 in self.terminals:
+            name2 = "%s_%d" % (name, i)
+            i += 1
+        return name2
+
+    def __initialize_terminals(self):
+        for terminal_type in set.union(configuration.TERMS_IN, configuration.TERMS_OUT):
+            if self.node_type == "render" and terminal_type == "outputs":
+                continue
+            if terminal_type in self.params():
+                for terminal in self.params()[terminal_type]:
+                    if self.node_type in ["actions", "observations"]:
+                        if terminal in self.default_params()[terminal_type]:
+                            continue
+                    name = terminal_type + "/" + terminal
+                    self.add_terminal(name=name)
+                    if self.node_type == "reset_node" and terminal_type == "outputs":
+                        name = "feedthroughs/" + terminal
+                        self.add_terminal(name=name)
+
+    def params(self):
+        return self._get_params(graph_backup=self.graph)
+
+    @exception_handler
+    def _get_params(self):
+        assert self.name in self.graph._state["nodes"], f" No entity with name '{self.name}' in graph."
+        return self.graph._state["nodes"][self.name]["config"]
+
+    def default_params(self):
+        return self.graph._state["backup"][self.name]
+
+    def set_param(self, parameter, value):
+        self._set_param(parameter, value, graph_backup=self.graph)
+
+    def get_view(self):
+        return self.graph.get_view(self.name, depth=["config"])
+
+    @exception_handler
+    def _set_param(self, parameter, value):
+        self.graph.set(value, self.get_view(), parameter=parameter)
+        if parameter == "color":
+            self.graphics_item().set_color()
+
+    def add_action(self):
+        name = self.__next_terminal_name("outputs/action")
+        self.graph._add_action(name.split("/")[-1])
+        self.add_terminal(name)
+
+    def add_observation(self):
+        name = self.__next_terminal_name("inputs/observation")
+        self.graph._add_observation(name.split("/")[-1])
+        self.add_terminal(name)
+
+    def add_terminal(self, name):
+        """Add a new terminal to this Node with the given name.
+
+        Causes sigTerminalAdded to be emitted."""
+        name = self.__next_terminal_name(name)
+
+        term = GuiTerminal(self, name)
+        self.terminals[name] = term
+
+        if term.is_input:
+            self.inputs[name] = term
+        else:
+            self.outputs[name] = term
+
+        self.graphics_item().update_terminals()
+        self.sigTerminalAdded.emit(self, term)
+        return term
+
+    def graphics_item(self):
+        """Return the GraphicsItem for this node."""
+        if self._graphics_item is None:
+            self._graphics_item = NodeGraphicsItem(self)
+        return self._graphics_item
+
+    def dependent_nodes(self):
+        """Return the list of nodes which provide direct input to this node"""
+        nodes = set()
+        for t in self.inputs.values():
+            nodes |= set([i.node for i in t.input_terminals()])
+        return nodes
+
+    def __repr__(self):
+        return "<Node %s @%x>" % (self.name, id(self))
+
+    def ctrl_widget(self):
+        """Return this Node's control widget.
+
+        By default, Nodes have no control widget. Subclasses may reimplement this
+        method to provide a custom widget. This method is called by Flowcharts
+        when they are constructing their Node list."""
+        return None
+
+    def connected(self, local_term, remote_term):
+        """Called whenever one of this node's terminals is connected elsewhere."""
+        pass
+
+    def disconnected(self, local_term, remote_term):
+        """Called whenever one of this node's terminals is disconnected from another."""
+        pass
+
+    def set_exception(self, exc):
+        self.exception = exc
+        self.recolor()
+
+    def clear_exception(self):
+        self.set_exception(None)
+
+    def recolor(self):
+        if self.exception is None:
+            self.graphics_item().setPen(QtGui.QPen(QtGui.QColor(0, 0, 0)))
+        else:
+            self.graphics_item().setPen(QtGui.QPen(QtGui.QColor(150, 0, 0), 3))
+
+    def load_state(self, state):
+        pos = state["gui_state"].get("pos", (0, 0))
+        self.graphics_item().setPos(*pos)
+
+    def save_terminals(self):
+        terms = OrderedDict()
+        for n, t in self.terminals.items():
+            terms[n] = t.save_state()
+        return terms
+
+    def clear_terminals(self):
+        for t in self.terminals.values():
+            t.close()
+        self.terminals = OrderedDict()
+        self.inputs = OrderedDict()
+        self.outputs = OrderedDict()
+
+    def close(self):
+        """Cleans up after the node--removes terminals, graphicsItem, widget"""
+        self.disconnect_all()
+        self.clear_terminals()
+        item = self.graphics_item()
+        if item.scene() is not None:
+            item.scene().removeItem(item)
+        self._graphics_item = None
+        w = self.ctrl_widget()
+        if w is not None:
+            w.setParent(None)
+        self.sigClosed.emit(self)
+
+    def disconnect_all(self):
+        for t in self.terminals.values():
+            t.disconnect_all()
 
 
 class RxGuiNode(QtCore.QObject):
@@ -56,7 +235,7 @@ class RxGuiNode(QtCore.QObject):
         return name2
 
     def __initialize_terminals(self):
-        for terminal_type in set.union(constants.TERMS_IN, constants.TERMS_OUT):
+        for terminal_type in set.union(configuration.TERMS_IN, configuration.TERMS_OUT):
             if self.node_type == "render" and terminal_type == "outputs":
                 continue
             if terminal_type in self.params():
@@ -124,7 +303,10 @@ class RxGuiNode(QtCore.QObject):
                 continue
             d[new_name] = d[old_name]
             del d[old_name]
-
+        gui_state = self.graph._state["gui_state"][self.name]
+        if old_name in gui_state["linestyle"]:
+            gui_state["linestyle"][new_name] = gui_state["linestyle"][old_name]
+            gui_state["linestyle"].pop(old_name)
         self.graphics_item().update_terminals()
         self.sigTerminalRenamed.emit(term, old_name)
 
@@ -294,8 +476,8 @@ class NodeGraphicsItem(GraphicsObject):
         self.label_changed()
 
     def set_color(self):
-        if "color" in self.node.params() and self.node.params()["color"] in constants.GUI_COLORS:
-            brush_color = np.array(constants.GUI_COLORS[self.node.params()["color"]])
+        if "color" in self.node.params() and self.node.params()["color"] in configuration.GUI_COLORS:
+            brush_color = np.array(configuration.GUI_COLORS[self.node.params()["color"]])
         else:
             brush_color = np.array([200, 200, 200])
 
@@ -308,14 +490,14 @@ class NodeGraphicsItem(GraphicsObject):
         self.update()
 
     def label_focus_out(self, ev):
-        QtGui.QGraphicsTextItem.focusOutEvent(self.nameItem, ev)
+        QtWidgets.QGraphicsTextItem.focusOutEvent(self.nameItem, ev)
         self.label_changed()
 
     def label_key_press(self, ev):
         if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
             self.label_changed()
         else:
-            QtGui.QGraphicsTextItem.keyPressEvent(self.nameItem, ev)
+            QtWidgets.QGraphicsTextItem.keyPressEvent(self.nameItem, ev)
 
     def label_changed(self):
         new_name = str(self.nameItem.toPlainText())
@@ -445,6 +627,9 @@ class NodeGraphicsItem(GraphicsObject):
             if not self.node.allow_remove:
                 return
             self.node.graph.remove(self.node.name, remove=False)
+            if self.node.name in self.node.graph._state["gui_state"]:
+                # Pop node from gui_state upon removal
+                self.node.graph._state["gui_state"].pop(self.node.name)
             self.node.close()
         else:
             ev.ignore()
@@ -468,7 +653,7 @@ class NodeGraphicsItem(GraphicsObject):
         menu.popup(QtCore.QPoint(pos.x(), pos.y()))
 
     def buildMenu(self):
-        self.menu = QtGui.QMenu()
+        self.menu = QtWidgets.QMenu()
         self.menu.setTitle("Node")
 
         if self.node.allow_add_terminal:
@@ -478,11 +663,11 @@ class NodeGraphicsItem(GraphicsObject):
                 self.menu.addAction("Add action", self.node.add_action)
             else:
                 for terminal_type in set.union(
-                    constants.TERMS[self._node_type]["in"],
-                    constants.TERMS[self._node_type]["out"],
+                    configuration.TERMS[self._node_type]["in"],
+                    configuration.TERMS[self._node_type]["out"],
                 ):
                     if terminal_type in self.node.default_params():
-                        terminal_menu = QtGui.QMenu("Add {}".format(terminal_type[:-1]), self.menu)
+                        terminal_menu = QtWidgets.QMenu("Add {}".format(terminal_type[:-1]), self.menu)
                         for terminal in self.node.default_params()[terminal_type]:
                             terminal_name = terminal_type + "/" + terminal
                             act = terminal_menu.addAction(
