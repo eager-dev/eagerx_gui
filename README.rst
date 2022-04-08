@@ -18,7 +18,8 @@ eagerx_gui package
     :depth: 2
 
 What is the *eagerx_gui* package?
-=================================
+#################################
+
 This repository/package provides GUI functionality for EAGERx.
 It allows to view graphs created using EAGERx, but also allows to create graphs interactively using the GUI.
 EAGERx (Engine Agnostic Gym Environments for Robotics) enables users to easily define new tasks, switch from one sensor to another, and switch from simulation to reality with a single line of code by being invariant to the physics engine.
@@ -28,7 +29,7 @@ EAGERx (Engine Agnostic Gym Environments for Robotics) enables users to easily d
 `Full documentation and tutorials (including package creation and contributing) are available here <https://eagerx.readthedocs.io/en/master/>`_.
 
 Installation
-============
+############
 
 You can install the package using pip:
 
@@ -40,8 +41,88 @@ You can install the package using pip:
     EAGERx depends on a minimal ROS installation. Fortunately, you **can** use eagerx anywhere as you would any python package,
     so it does **not** impose a ROS package structure on your project.
 
+Example
+#######
+
+The GUI can be used for visualising a `graph <https://eagerx.readthedocs.io/en/master/guide/api_reference/graph/graph.html>`_ that is created within EAGERx.
+Also, a complete graph can be created using the GUI as shown in the GIF below.
+
+.. image:: figures/gui.GIF
+
+The code used for this example is the following:
+
+::
+
+    import eagerx
+    from eagerx import Bridge
+
+    eagerx.initialize("eagerx_core", anonymous=True, log_level=eagerx.log.INFO)
+
+    # Environment
+    from eagerx.core.graph import Graph
+    from eagerx.core.env import EagerxEnv
+    from eagerx.wrappers import Flatten
+
+    # Implementation specific
+    import eagerx.converters # Registers SpaceConverters
+    import eagerx.nodes  # Registers butterworth_filter
+    import eagerx_ode  # Registers OdeBridge
+    import eagerx_dcsc_setups.pendulum  # Registers Pendulum
+
+    # Other
+    import numpy as np
+    import stable_baselines3 as sb
+
+
+    if __name__ == "__main__":
+        # Define rate (depends on rate of ode)
+        rate = 30.0
+
+        # Initialize empty graph
+        graph = Graph.create()
+
+        # Show in the gui
+        graph.gui()
+
+        # Define bridges
+        bridge = Bridge.make(
+            "OdeBridge",
+            rate=rate,
+            is_reactive=True,
+            real_time_factor=0,
+            process=eagerx.process.NEW_PROCESS,
+        )
+
+        # Define step function
+        def step_fn(prev_obs, obs, action, steps):
+            state = obs["observation"][0]
+            # Calculate reward
+            sin_th, cos_th, thdot = state
+            th = np.arctan2(sin_th, cos_th)
+            cost = th**2 + 0.1 * (thdot / (1 + 10 * abs(th))) ** 2
+            # Determine done flag
+            done = steps > 500
+            # Set info:
+            info = dict()
+            return obs, -cost, done, info
+
+        # Initialize Environment
+        env = Flatten(
+            EagerxEnv(name="rx", rate=rate, graph=graph, bridge=bridge, step_fn=step_fn)
+        )
+        env.render("human")
+
+        # Train for 5 minutes
+        model = sb.SAC("MlpPolicy", env, verbose=1)
+        model.learn(total_timesteps=int(300 * rate))
+
+
+.. note::
+    For this example, the `eagerx_dcsc_setups package <https://github.com/eager-dev/eagerx_dcsc_setups>`_ should be installed.
+
 Cite EAGERx
-===========
+###########
+
 If you are using EAGERx for your scientific publications, please cite:
 
 .. code:: bibtex
