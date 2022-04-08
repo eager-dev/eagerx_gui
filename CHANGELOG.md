@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.0 (2022-04-08)
+### Feature
+* Dummy commit to trigger minor release ([`5ea0f5c`](https://github.com/eager-dev/eagerx_gui/commit/5ea0f5ca42853befa8f7a0c54941bf8eb6e8c77d))
+
 ## v0.1.6 (2022-04-08)
 ### Fix
 * Minor changes related to bump pyqtgraph and to improve visualisation gui ([`f7eca7a`](https://github.com/eager-dev/eagerx_gui/commit/f7eca7a8ef841be6437f73cb92c88f37bcac2c50))
