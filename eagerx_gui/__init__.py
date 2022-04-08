@@ -1,16 +1,17 @@
 __version__ = "0.1.5"
 
 import os
+
 os.environ["PYQTGRAPH_QT_LIB"] = "PyQt6"
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtWidgets, QtGui
+from pyqtgraph.Qt import QtWidgets
 from eagerx_gui.gui import Gui, EngineGui
 import sys
 
 
 def launch_gui(state):
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()
@@ -33,8 +34,9 @@ def launch_gui(state):
     app.quit()
     return new_state
 
+
 def launch_engine_gui(state):
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()

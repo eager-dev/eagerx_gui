@@ -5,7 +5,7 @@
 import numpy as np
 from functools import partial
 
-from eagerx.core import constants
+from eagerx_gui import configuration
 from eagerx_gui.utils import get_yaml_type
 from eagerx_gui.gui_terminal import GuiTerminal
 from eagerx_gui.pyqtgraph_utils import exception_handler, ParamWindow
@@ -16,6 +16,7 @@ from pyqtgraph import functions as fn
 from collections import OrderedDict
 
 translate = QtCore.QCoreApplication.translate
+
 
 class RxEngineGuiNode(QtCore.QObject):
     sigClosed = QtCore.Signal(object)
@@ -51,7 +52,7 @@ class RxEngineGuiNode(QtCore.QObject):
         return name2
 
     def __initialize_terminals(self):
-        for terminal_type in set.union(constants.TERMS_IN, constants.TERMS_OUT):
+        for terminal_type in set.union(configuration.TERMS_IN, configuration.TERMS_OUT):
             if self.node_type == "render" and terminal_type == "outputs":
                 continue
             if terminal_type in self.params():
@@ -195,6 +196,7 @@ class RxEngineGuiNode(QtCore.QObject):
         for t in self.terminals.values():
             t.disconnect_all()
 
+
 class RxGuiNode(QtCore.QObject):
     sigClosed = QtCore.Signal(object)
     sigRenamed = QtCore.Signal(object, object)
@@ -233,7 +235,7 @@ class RxGuiNode(QtCore.QObject):
         return name2
 
     def __initialize_terminals(self):
-        for terminal_type in set.union(constants.TERMS_IN, constants.TERMS_OUT):
+        for terminal_type in set.union(configuration.TERMS_IN, configuration.TERMS_OUT):
             if self.node_type == "render" and terminal_type == "outputs":
                 continue
             if terminal_type in self.params():
@@ -422,6 +424,7 @@ class RxGuiNode(QtCore.QObject):
         for t in self.terminals.values():
             t.disconnect_all()
 
+
 class TextItem(QtWidgets.QGraphicsTextItem):
     def __init__(self, text, parent, on_update):
         super().__init__(text, parent)
@@ -442,6 +445,7 @@ class TextItem(QtWidgets.QGraphicsTextItem):
     def mousePressEvent(self, ev):
         if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             self.setFocus(QtCore.Qt.FocusReason.MouseFocusReason)  # focus text label
+
 
 class NodeGraphicsItem(GraphicsObject):
     def __init__(self, node):
@@ -472,8 +476,8 @@ class NodeGraphicsItem(GraphicsObject):
         self.label_changed()
 
     def set_color(self):
-        if "color" in self.node.params() and self.node.params()["color"] in constants.GUI_COLORS:
-            brush_color = np.array(constants.GUI_COLORS[self.node.params()["color"]])
+        if "color" in self.node.params() and self.node.params()["color"] in configuration.GUI_COLORS:
+            brush_color = np.array(configuration.GUI_COLORS[self.node.params()["color"]])
         else:
             brush_color = np.array([200, 200, 200])
 
@@ -486,14 +490,14 @@ class NodeGraphicsItem(GraphicsObject):
         self.update()
 
     def label_focus_out(self, ev):
-        QtGui.QGraphicsTextItem.focusOutEvent(self.nameItem, ev)
+        QtWidgets.QGraphicsTextItem.focusOutEvent(self.nameItem, ev)
         self.label_changed()
 
     def label_key_press(self, ev):
         if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
             self.label_changed()
         else:
-            QtGui.QGraphicsTextItem.keyPressEvent(self.nameItem, ev)
+            QtWidgets.QGraphicsTextItem.keyPressEvent(self.nameItem, ev)
 
     def label_changed(self):
         new_name = str(self.nameItem.toPlainText())
@@ -649,7 +653,7 @@ class NodeGraphicsItem(GraphicsObject):
         menu.popup(QtCore.QPoint(pos.x(), pos.y()))
 
     def buildMenu(self):
-        self.menu = QtGui.QMenu()
+        self.menu = QtWidgets.QMenu()
         self.menu.setTitle("Node")
 
         if self.node.allow_add_terminal:
@@ -659,11 +663,11 @@ class NodeGraphicsItem(GraphicsObject):
                 self.menu.addAction("Add action", self.node.add_action)
             else:
                 for terminal_type in set.union(
-                    constants.TERMS[self._node_type]["in"],
-                    constants.TERMS[self._node_type]["out"],
+                    configuration.TERMS[self._node_type]["in"],
+                    configuration.TERMS[self._node_type]["out"],
                 ):
                     if terminal_type in self.node.default_params():
-                        terminal_menu = QtGui.QMenu("Add {}".format(terminal_type[:-1]), self.menu)
+                        terminal_menu = QtWidgets.QMenu("Add {}".format(terminal_type[:-1]), self.menu)
                         for terminal in self.node.default_params()[terminal_type]:
                             terminal_name = terminal_type + "/" + terminal
                             act = terminal_menu.addAction(

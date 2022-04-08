@@ -1,9 +1,24 @@
 from eagerx.utils.utils import get_attribute_from_module
 import networkx as nx
+import ast
+
+
+def tryeval(val):
+    try:
+        val = ast.literal_eval(val)
+    except Exception as e:
+        if isinstance(e, ValueError):
+            pass
+        elif isinstance(e, SyntaxError):
+            pass
+        else:
+            raise
+    return val
 
 
 def empty_gui_state():
     return dict(pos=None, linestyle=dict())
+
 
 def get_yaml_type(yaml):
     if "node_type" in yaml:
@@ -14,6 +29,7 @@ def get_yaml_type(yaml):
     else:
         type = "object"
     return type
+
 
 def get_nodes_and_objects_library():
     from eagerx.core.register import REGISTRY
@@ -27,6 +43,7 @@ def get_nodes_and_objects_library():
             library[entity_cls.__name__].append({"entity_id": id, "spec": spec, "entity_cls": entity_cls, "cls": cls})
     return library
 
+
 def get_connected_nodes(state, node):
     # Get a set of all the nodes that are connected directly to some node
     connected_nodes = set()
@@ -36,6 +53,7 @@ def get_connected_nodes(state, node):
         elif target[0] == node:
             connected_nodes.add(source[0])
     return connected_nodes
+
 
 def is_connected_to_fixed(state, node, fixed_positions, nodes_to_ignore=None):
     # Check if node is connected to any fixed node (direct or indirect)
@@ -48,9 +66,10 @@ def is_connected_to_fixed(state, node, fixed_positions, nodes_to_ignore=None):
             continue
         elif connected_node in fixed_positions.keys():
             return True
-        elif connected_to_fixed(state, connected_node, fixed_positions, nodes_to_ignore):
+        elif is_connected_to_fixed(state, connected_node, fixed_positions, nodes_to_ignore):
             return True
     return False
+
 
 def add_pos_to_state(state, fixed_nodes=["env/actions", "env/observations", "env/render"]):
     # Position nodes using Fruchterman-Reingold force-directed algorithm.
@@ -86,6 +105,7 @@ def add_pos_to_state(state, fixed_nodes=["env/actions", "env/observations", "env
         state["gui_state"][node]["pos"] = pos.tolist()
     return state
 
+
 def add_pos_to_engine_state(state, fixed_nodes=["sensors", "actuators"]):
     # Position nodes using Fruchterman-Reingold force-directed algorithm.
     node_size = 150
@@ -97,10 +117,10 @@ def add_pos_to_engine_state(state, fixed_nodes=["sensors", "actuators"]):
     clusters = {}
     y_pos = {}
     for fixed_node in fixed_nodes:
-        clusters[fixed_node] = (get_connected_nodes(state, fixed_node))
+        clusters[fixed_node] = get_connected_nodes(state, fixed_node)
 
     for key, cluster in clusters.items():
-        y_pos[key] = - ((len(cluster) - 1) / 2) * node_size
+        y_pos[key] = -((len(cluster) - 1) / 2) * node_size
 
     for node, params in state["nodes"].items():
         if node not in state["gui_state"]:
@@ -118,7 +138,7 @@ def add_pos_to_engine_state(state, fixed_nodes=["sensors", "actuators"]):
             for key, cluster in clusters.items():
                 if node in cluster:
                     if key == fixed_nodes[0]:
-                        x_pos = - node_size
+                        x_pos = -node_size
                     else:
                         x_pos = 2 * node_size
                     fixed_positions[node] = [x_pos, y_pos[key]]

@@ -15,11 +15,13 @@ from pyqtgraph import FileDialog, DataTreeWidget
 from pyqtgraph import dockarea
 from pyqtgraph.debug import printExc
 
-# Import eagerx modules
-from eagerx.core import constants
+# eagerx imports
 from eagerx.core.graph import Graph
 from eagerx.core.graph_engine import EngineGraph
 from eagerx.core.entities import Node
+
+# eagerx_gui imports
+from eagerx_gui import configuration
 from eagerx_gui.utils import get_nodes_and_objects_library, add_pos_to_state, add_pos_to_engine_state, empty_gui_state
 from eagerx_gui import gui_view
 from eagerx_gui.gui_node import RxGuiNode, RxEngineGuiNode, NodeGraphicsItem
@@ -29,6 +31,7 @@ from eagerx_gui.pyqtgraph_utils import exception_handler, NodeCreationDialog
 # pyside and pyqt use incompatible ui files.
 rx_ui_template = importlib.import_module("eagerx_gui.templates.ui_{}".format(QT_LIB.lower()))
 rx_engine_ui_template = importlib.import_module("eagerx_gui.templates.engine_ui_{}".format(QT_LIB.lower()))
+
 
 class EngineGui(EngineGraph, QtCore.QObject):
     library = get_nodes_and_objects_library()
@@ -679,7 +682,7 @@ class EagerxGraphWidget(dockarea.DockArea):
         def build_sub_menu(library, root_menu, submenus, pos=None):
             for node in library:
                 id = node["entity_id"]
-                if id in constants.GUI_NODE_IDS_TO_IGNORE:
+                if id in configuration.GUI_NODE_IDS_TO_IGNORE:
                     continue
                 act = root_menu.addAction(id)
                 act.nodeType = node
@@ -688,7 +691,7 @@ class EagerxGraphWidget(dockarea.DockArea):
         self.submenus = []
         self.nodeMenu = []
         for node_type, library in self.chart.library.items():
-            if node_type in constants.GUI_ENTITIES_TO_IGNORE:
+            if node_type in configuration.GUI_ENTITIES_TO_IGNORE:
                 continue
             menu = QtWidgets.QMenu("Add {}".format(node_type.replace("_", " ")))
             build_sub_menu(library, menu, self.submenus, pos=pos)
@@ -773,16 +776,16 @@ class EagerxGraphWidget(dockarea.DockArea):
             if hasattr(item, "term") and isinstance(item, TerminalGraphicsItem):
                 text = "name: " + item.term.terminal_name
                 for key, value in item.term.params().items():
-                    if key in constants.GUI_WIDGETS["term"]["hide"]["all"]:
+                    if key in configuration.GUI_WIDGETS["term"]["hide"]["all"]:
                         continue
                     elif (
-                        item.term.node_type in constants.GUI_WIDGETS["term"]["hide"]
-                        and key in constants.GUI_WIDGETS["term"]["hide"][item.term.node_type]
+                        item.term.node_type in configuration.GUI_WIDGETS["term"]["hide"]
+                        and key in configuration.GUI_WIDGETS["term"]["hide"][item.term.node_type]
                     ):
                         continue
                     elif (
-                        item.term.terminal_type in constants.GUI_WIDGETS["term"]["hide"]
-                        and key in constants.GUI_WIDGETS["term"]["hide"][item.term.terminal_type]
+                        item.term.terminal_type in configuration.GUI_WIDGETS["term"]["hide"]
+                        and key in configuration.GUI_WIDGETS["term"]["hide"][item.term.terminal_type]
                     ):
                         continue
                     text += "\n" + "{}: {}".format(key, value)
@@ -791,11 +794,11 @@ class EagerxGraphWidget(dockarea.DockArea):
             elif hasattr(item, "node") and isinstance(item, NodeGraphicsItem):
                 text = ""
                 for key, value in item.node.params().items():
-                    if key in constants.GUI_WIDGETS["node"]["hide"]["all"]:
+                    if key in configuration.GUI_WIDGETS["node"]["hide"]["all"]:
                         continue
                     elif (
-                        item.node.node_type in constants.GUI_WIDGETS["node"]["hide"]
-                        and key in constants.GUI_WIDGETS["node"]["hide"][item.node.node_type]
+                        item.node.node_type in configuration.GUI_WIDGETS["node"]["hide"]
+                        and key in configuration.GUI_WIDGETS["node"]["hide"][item.node.node_type]
                     ):
                         continue
                     text += "{}: {}\n".format(key, value)

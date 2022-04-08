@@ -168,7 +168,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "eagerx"
-version = "0.1.13"
+version = "0.1.14"
 description = "Engine Angostic Gym Environments for Robotics"
 category = "main"
 optional = false
@@ -176,7 +176,7 @@ python-versions = ">=3.6.2,<4.0.0"
 
 [package.dependencies]
 defusedxml = ">=0.7.1,<0.8.0"
-gym = ">=0.20.0,<0.21.0"
+gym = ">=0.21.0,<0.22.0"
 netifaces = ">=0.11.0,<0.12.0"
 networkx = ">=2.5.1,<3.0.0"
 opencv-python = ">=4.3.0.36,<5.0.0.0"
@@ -191,7 +191,6 @@ sphinx-autodoc-typehints = ">=1.0,<2.0"
 sphinx-rtd-theme = ">=1.0,<2.0"
 tabulate = ">=0.8.9,<0.9.0"
 termcolor = ">=1.1.0,<2.0.0"
-typing = ">=3.0,<4.0"
 
 [[package]]
 name = "flake8"
@@ -244,7 +243,7 @@ woff = ["zopfli (>=0.1.4)", "brotlicffi (>=0.8.0)", "brotli (>=1.0.1)"]
 
 [[package]]
 name = "gym"
-version = "0.20.0"
+version = "0.21.0"
 description = "Gym: A universal API for reinforcement learning environments."
 category = "main"
 optional = false
@@ -255,12 +254,13 @@ cloudpickle = ">=1.2.0"
 numpy = ">=1.18.0"
 
 [package.extras]
-all = ["ale-py (>=0.7,<1.0)", "mujoco_py (>=1.50,<2.0)", "box2d-py (==2.3.5)", "scipy (>=1.4.1)", "pyglet (>=1.4.0)", "opencv-python (>=3)", "lz4 (>=3.1.0)"]
-atari = ["ale-py (>=0.7,<1.0)"]
+accept-rom-license = ["autorom[accept-rom-license] (>=0.4.2,<0.5.0)"]
+all = ["mujoco_py (>=1.50,<2.0)", "lz4 (>=3.1.0)", "opencv-python (>=3)", "ale-py (>=0.7.1,<0.8.0)", "pyglet (>=1.4.0)", "scipy (>=1.4.1)", "box2d-py (==2.3.5)", "pyglet (>=1.4.0)", "ale-py (>=0.7.1,<0.8.0)", "lz4 (>=3.1.0)", "opencv-python (>=3)", "pyglet (>=1.4.0)", "box2d-py (==2.3.5)", "pyglet (>=1.4.0)", "scipy (>=1.4.1)", "mujoco_py (>=1.50,<2.0)"]
+atari = ["ale-py (>=0.7.1,<0.8.0)"]
 box2d = ["box2d-py (==2.3.5)", "pyglet (>=1.4.0)"]
 classic_control = ["pyglet (>=1.4.0)"]
 mujoco = ["mujoco_py (>=1.50,<2.0)"]
-nomujoco = ["ale-py (>=0.7,<1.0)", "box2d-py (==2.3.5)", "scipy (>=1.4.1)", "pyglet (>=1.4.0)", "opencv-python (>=3)", "lz4 (>=3.1.0)"]
+nomujoco = ["lz4 (>=3.1.0)", "opencv-python (>=3)", "ale-py (>=0.7.1,<0.8.0)", "pyglet (>=1.4.0)", "scipy (>=1.4.1)", "box2d-py (==2.3.5)", "pyglet (>=1.4.0)"]
 other = ["lz4 (>=3.1.0)", "opencv-python (>=3)"]
 robotics = ["mujoco_py (>=1.50,<2.0)"]
 toy_text = ["scipy (>=1.4.1)"]
@@ -972,14 +972,6 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "typing"
-version = "3.7.4.3"
-description = "Type Hints for Python"
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-
-[[package]]
 name = "typing-extensions"
 version = "4.1.1"
 description = "Backported and Experimental Type Hints for Python 3.6+"
@@ -1015,7 +1007,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "70c20a4fdd1eda43c7ff771ab23f5065b5e442d79336c6c901192fe5e18afe76"
+content-hash = "73b837110c023d01b74544c6e8c9804db8c34db80618d7ec058a27b5084f0283"
 
 [metadata.files]
 alabaster = [
@@ -1143,8 +1135,8 @@ docutils = [
     {file = "docutils-0.17.1.tar.gz", hash = "sha256:686577d2e4c32380bb50cbb22f575ed742d58168cee37e99117a854bcd88f125"},
 ]
 eagerx = [
-    {file = "eagerx-0.1.13-py3-none-any.whl", hash = "sha256:848b95cd65e1e8762d2f3cb3756c2cea137f06127ee6cc1c7451c800681ad4b3"},
-    {file = "eagerx-0.1.13.tar.gz", hash = "sha256:950e814eace9b9c9195fff893f5d20ea5124d35b8396400fea54dbcec67960e2"},
+    {file = "eagerx-0.1.14-py3-none-any.whl", hash = "sha256:6338fae72766314c98aa6a0dcf7b68838453c8a098df1d1f8343070a6ddbd59d"},
+    {file = "eagerx-0.1.14.tar.gz", hash = "sha256:e2b0c30797bf416d35f7e0338fd2124942e2e06b464ce44faf24edaa9187649d"},
 ]
 flake8 = [
     {file = "flake8-4.0.1-py2.py3-none-any.whl", hash = "sha256:479b1304f72536a55948cb40a32dce8bb0ffe3501e26eaf292c7e60eb5e0428d"},
@@ -1159,7 +1151,7 @@ fonttools = [
     {file = "fonttools-4.31.2.zip", hash = "sha256:236b29aee6b113e8f7bee28779c1230a86ad2aac9a74a31b0aedf57e7dfb62a4"},
 ]
 gym = [
-    {file = "gym-0.20.0.tar.gz", hash = "sha256:ca963d003cf8b7db8205865de6f3fed605e17e8e488f55ed9118b7768ea21100"},
+    {file = "gym-0.21.0.tar.gz", hash = "sha256:0fd1ce165c754b4017e37a617b097c032b8c3feb8a0394ccc8777c7c50dddff3"},
 ]
 idna = [
     {file = "idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
@@ -1733,10 +1725,6 @@ tifffile = [
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
-]
-typing = [
-    {file = "typing-3.7.4.3-py2-none-any.whl", hash = "sha256:283d868f5071ab9ad873e5e52268d611e851c870a2ba354193026f2dfb29d8b5"},
-    {file = "typing-3.7.4.3.tar.gz", hash = "sha256:1187fb9c82fd670d10aa07bbb6cfcfe4bdda42d6fab8d5134f04e8c4d0b71cc9"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.1.1-py3-none-any.whl", hash = "sha256:21c85e0fe4b9a155d0799430b0ad741cdce7e359660ccbd8b530613e8df88ce2"},
