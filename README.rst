@@ -52,21 +52,14 @@ Also, a complete graph can be created using the GUI as shown in the GIF below.
 The code used for this example is the following:
 
 .. code:: python
-
+    
     import eagerx
-    from eagerx import Bridge
-
-    eagerx.initialize("eagerx_core", anonymous=True, log_level=eagerx.log.INFO)
-
-    # Environment
-    from eagerx.core.graph import Graph
-    from eagerx.core.env import EagerxEnv
     from eagerx.wrappers import Flatten
-
-    # Implementation specific
+    
+    # Register components (objects, nodes, converters, etc..)
     import eagerx.converters # Registers SpaceConverters
-    import eagerx.nodes  # Registers butterworth_filter
-    import eagerx_ode  # Registers OdeBridge
+    import eagerx.nodes      # Registers butterworth_filter
+    import eagerx_ode        # Registers OdeBridge
     import eagerx_dcsc_setups.pendulum  # Registers Pendulum
 
     # Other
@@ -75,17 +68,20 @@ The code used for this example is the following:
 
 
     if __name__ == "__main__":
-        # Define rate (depends on rate of ode)
+        # Initialize node (& core if not already started)
+        eagerx.initialize("eagerx_core", anonymous=True, log_level=eagerx.log.INFO)
+        
+        # Define simulation rate (Hz)
         rate = 30.0
 
         # Initialize empty graph
-        graph = Graph.create()
+        graph = eagerx.Graph.create()
 
         # Show in the gui
         graph.gui()
 
-        # Define bridges
-        bridge = Bridge.make(
+        # Define bridge
+        bridge = eagerx.Bridge.make(
             "OdeBridge",
             rate=rate,
             is_reactive=True,
@@ -108,7 +104,7 @@ The code used for this example is the following:
 
         # Initialize Environment
         env = Flatten(
-            EagerxEnv(name="rx", rate=rate, graph=graph, bridge=bridge, step_fn=step_fn)
+            eagerx.EagerxEnv(name="rx", rate=rate, graph=graph, bridge=bridge, step_fn=step_fn)
         )
         env.render("human")
 
