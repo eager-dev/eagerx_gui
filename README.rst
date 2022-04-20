@@ -51,7 +51,7 @@ Also, a complete graph can be created using the GUI as shown in the GIF below.
 
 The code used for this example is the following:
 
-::
+.. code:: python
 
     import eagerx
     from eagerx import Bridge
