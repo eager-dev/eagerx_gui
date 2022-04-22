@@ -2,6 +2,15 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.1 (2022-04-22)
+### Fix
+* Improve node positioning in engine graph ([`887d89d`](https://github.com/eager-dev/eagerx_gui/commit/887d89da777d657b93f183410a2385867585d23e))
+
+### Documentation
+* Clean up code eample readme ([`af18449`](https://github.com/eager-dev/eagerx_gui/commit/af18449a725414a034d2075e48655072de632b91))
+* Update gif ([`3e912fd`](https://github.com/eager-dev/eagerx_gui/commit/3e912fd008444b2fd049d8ae6382e27b7567d5fb))
+* Add example with gif ([`bfe619e`](https://github.com/eager-dev/eagerx_gui/commit/bfe619e9a8ae1ed7006c33bf60324f4748d07129))
+
 ## v0.2.0 (2022-04-08)
 ### Feature
 * Dummy commit to trigger minor release ([`5ea0f5c`](https://github.com/eager-dev/eagerx_gui/commit/5ea0f5ca42853befa8f7a0c54941bf8eb6e8c77d))
