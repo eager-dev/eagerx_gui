@@ -77,6 +77,8 @@ def add_pos_to_state(state, fixed_nodes=["env/actions", "env/observations", "env
     G = nx.Graph()
     fixed_positions = {}
     disconnected_y = node_size
+    x_pos = node_size * (2 + max((len(state["nodes"].items()) - 3) // 2, 2))
+
     for node, params in state["nodes"].items():
         if node not in state["gui_state"]:
             state["gui_state"][node] = empty_gui_state()  # Add gui states here.
@@ -84,7 +86,6 @@ def add_pos_to_state(state, fixed_nodes=["env/actions", "env/observations", "env
         if gui_state.get("pos", None) is not None and len(gui_state["pos"]) == 2:
             fixed_positions[node] = gui_state["pos"]
         elif params["config"]["name"] in fixed_nodes:
-            x_pos = node_size * (2 + max((len(state["nodes"].items()) - 3) // 2, 2))
             if params["config"]["name"] == fixed_nodes[0]:
                 pos = [0, 0]
             elif params["config"]["name"] == fixed_nodes[1]:
@@ -106,12 +107,12 @@ def add_pos_to_state(state, fixed_nodes=["env/actions", "env/observations", "env
     return state
 
 
-def add_pos_to_engine_state(state, fixed_nodes=["sensors", "actuators"]):
+def add_pos_to_engine_state(state, fixed_nodes=["actuators", "sensors"]):
     # Position nodes using Fruchterman-Reingold force-directed algorithm.
     node_size = 150
     G = nx.Graph()
     fixed_positions = {}
-    disconnected_y = node_size
+    x_pos = node_size * (2 + max((len(state["nodes"].items()) - 3) // 2, 3))
 
     # First get two clusters of nodes, i.e. actions and observations cluster
     clusters = {}
@@ -129,19 +130,20 @@ def add_pos_to_engine_state(state, fixed_nodes=["sensors", "actuators"]):
         if gui_state.get("pos", None) is not None and len(gui_state["pos"]) == 2:
             fixed_positions[node] = gui_state["pos"]
         elif params["config"]["name"] in fixed_nodes:
+            x_pos = node_size * (2 + max((len(state["nodes"].items()) - 3) // 2, 2))
             if params["config"]["name"] == fixed_nodes[0]:
                 pos = [0, 0]
             else:
-                pos = [node_size, 0]
+                pos = [x_pos, 0]
             fixed_positions[node] = pos
         else:
             for key, cluster in clusters.items():
                 if node in cluster:
                     if key == fixed_nodes[0]:
-                        x_pos = -node_size
+                        x_pos_cluster = 1.25 * node_size
                     else:
-                        x_pos = 2 * node_size
-                    fixed_positions[node] = [x_pos, y_pos[key]]
+                        x_pos_cluster = x_pos - 1.25 * node_size
+                    fixed_positions[node] = [x_pos_cluster, y_pos[key]]
                     y_pos[key] += node_size
                     break
         G.add_node(node)
