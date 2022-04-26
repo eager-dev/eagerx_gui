@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.2 (2022-04-26)
+### Fix
+* Bump pyqt6 to 6.3.0 ([`d097742`](https://github.com/eager-dev/eagerx_gui/commit/d0977422046619a2b8fd9c30a38b9dfe7430eb9d))
+* Refactor `is_reactive` to `sync` ([`62b77b8`](https://github.com/eager-dev/eagerx_gui/commit/62b77b847d1d3f64783a1e6de5d539cc89bc4e94))
+
 ## v0.2.1 (2022-04-22)
 ### Fix
 * Improve node positioning in engine graph ([`887d89d`](https://github.com/eager-dev/eagerx_gui/commit/887d89da777d657b93f183410a2385867585d23e))
