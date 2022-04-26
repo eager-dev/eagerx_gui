@@ -43,7 +43,7 @@ if __name__ == "__main__":
     bridge = eagerx.Bridge.make(
         "GymBridge",
         rate=rate,
-        is_reactive=True,
+        sync=True,
         real_time_factor=1,
         process=eagerx.process.NEW_PROCESS,
     )

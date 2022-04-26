@@ -84,7 +84,7 @@ The code used for this example is the following:
         bridge = eagerx.Bridge.make(
             "OdeBridge",
             rate=rate,
-            is_reactive=True,
+            sync=True,
             real_time_factor=0,
             process=eagerx.process.NEW_PROCESS,
         )
