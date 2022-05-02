@@ -10,11 +10,12 @@ from pyqtgraph.Qt import QtWidgets
 from eagerx_gui import configuration
 from eagerx_gui.utils import tryeval
 from eagerx.utils.utils import (
+    load,
     get_attribute_from_module,
     get_module_type_string,
     get_opposite_msg_cls,
 )
-from eagerx.core.register import REVERSE_REGISTRY
+from eagerx.core.register import REVERSE_REGISTRY, REGISTRY
 
 
 def exception_handler(function_to_decorate):
@@ -47,7 +48,7 @@ class NodeCreationDialog(QtWidgets.QDialog):
         self.mapping = {}
         self.node_type = node_type
 
-        signature = node_type["entity_cls"].get_spec(node_type["entity_id"], verbose=False)
+        signature = inspect.signature(REGISTRY[node_type["entity_cls"]][node_type["entity_id"]]["spec"])
         parameters = signature.parameters
 
         self.layout = QtWidgets.QGridLayout()
@@ -453,7 +454,7 @@ class ConverterDialog(QtWidgets.QDialog):
                     ]:
                         continue
                 available_converters[cnvrtr["entity_id"]] = {
-                    "spec": cnvrtr["entity_cls"].get_spec(cnvrtr["entity_id"], verbose=False),
+                    "spec": inspect.signature(REGISTRY[cnvrtr["entity_cls"]][cnvrtr["entity_id"]]["spec"]),
                     "cls": cnvrtr_cls,
                 }
 
