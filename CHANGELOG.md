@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.3 (2022-05-02)
+### Fix
+* Replace `get_spec`. ([`bcc931c`](https://github.com/eager-dev/eagerx_gui/commit/bcc931cd5fc8edbf953a89187cf46a9b343c9ed5))
+
+### Documentation
+* Update  bibtex typo ([`a0f98e1`](https://github.com/eager-dev/eagerx_gui/commit/a0f98e13641289f38965e7a5cae255d95d35643d))
+
 ## v0.2.2 (2022-04-26)
 ### Fix
 * Bump pyqt6 to 6.3.0 ([`d097742`](https://github.com/eager-dev/eagerx_gui/commit/d0977422046619a2b8fd9c30a38b9dfe7430eb9d))
