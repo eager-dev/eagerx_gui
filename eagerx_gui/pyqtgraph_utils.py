@@ -462,7 +462,9 @@ class ConverterDialog(QtWidgets.QDialog):
                 # Add initial_obs
                 if cnvrtr_type == "SpaceConverter":
                     if "initial_obs" not in available_converters[cnvrtr["entity_id"]]["spec"].parameters.keys():
-                        arg_initial_obs = inspect.Parameter("initial_obs", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=Optional[Any], default=None)
+                        arg_initial_obs = inspect.Parameter(
+                            "initial_obs", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=Optional[Any], default=None
+                        )
                         sig = available_converters[cnvrtr["entity_id"]]["spec"]
                         sig = sig.replace(parameters=tuple(sig.parameters.values()) + (arg_initial_obs,))
                         available_converters[cnvrtr["entity_id"]]["spec"] = sig
