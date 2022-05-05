@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.4 (2022-05-05)
+### Fix
+* Skip "spec" keyword, add "initial_obs" to SpaceConverter ([`166c4aa`](https://github.com/eager-dev/eagerx_gui/commit/166c4aa034db305516423169405d4de1bcdb88e2))
+
 ## v0.2.3 (2022-05-02)
 ### Fix
 * Replace `get_spec`. ([`bcc931c`](https://github.com/eager-dev/eagerx_gui/commit/bcc931cd5fc8edbf953a89187cf46a9b343c9ed5))
