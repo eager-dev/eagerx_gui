@@ -1,5 +1,6 @@
 import yaml
 import inspect
+from typing import Optional, Any
 
 from functools import wraps, partial
 from copy import deepcopy
@@ -10,7 +11,6 @@ from pyqtgraph.Qt import QtWidgets
 from eagerx_gui import configuration
 from eagerx_gui.utils import tryeval
 from eagerx.utils.utils import (
-    load,
     get_attribute_from_module,
     get_module_type_string,
     get_opposite_msg_cls,
@@ -60,6 +60,8 @@ class NodeCreationDialog(QtWidgets.QDialog):
         optional_args = {}
 
         for key in parameters.keys():
+            if key == "spec":
+                continue
             if parameters[key].default is inspect._empty:
                 required_args[key] = parameters[key]
             else:
@@ -457,6 +459,13 @@ class ConverterDialog(QtWidgets.QDialog):
                     "spec": inspect.signature(REGISTRY[cnvrtr["entity_cls"]][cnvrtr["entity_id"]]["spec"]),
                     "cls": cnvrtr_cls,
                 }
+                # Add initial_obs
+                if cnvrtr_type == "SpaceConverter":
+                    if "initial_obs" not in available_converters[cnvrtr["entity_id"]]["spec"].parameters.keys()
+                        arg_initial_obs = inspect.Parameter("initial_obs", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=Optional[Any], default=None)
+                        sig = available_converters[cnvrtr["entity_id"]]["spec"]
+                        sig = sig.replace(parameters=tuple(sig.parameters.values()) + (arg_initial_obs,))
+                        available_converters[cnvrtr["entity_id"]]["spec"] = sig
 
         available_converters_list = list(available_converters.keys())
 
@@ -471,6 +480,8 @@ class ConverterDialog(QtWidgets.QDialog):
         if converter_id is not None:
             parameters = available_converters[converter_id]["spec"].parameters
             for key in parameters.keys():
+                if key == "spec":
+                    continue
                 if parameters[key].default is inspect._empty:
                     required_args[key] = parameters[key]
                 else:
@@ -478,6 +489,8 @@ class ConverterDialog(QtWidgets.QDialog):
             invalid_arguments = []
             for key in converter.keys():
                 if key not in parameters.keys():
+                    if key == "initial_obs":
+                        continue
                     invalid_arguments.append(key)
             for key in invalid_arguments:
                 converter.pop(key)
