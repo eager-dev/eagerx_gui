@@ -48,7 +48,7 @@ GUI_WIDGETS = {
                 "error": 40,
                 "fatal": 50,
             },
-            "process": {"new process": 0, "environment": 1, "bridge": 2, "external": 3},
+            "process": {"new process": 0, "environment": 1, "engine": 2, "external": 3},
         },
         "constant": {
             "all": list(set.union(TERMS_IN, TERMS_OUT, {"name", "entity_id", "launch_file"})),
@@ -100,7 +100,7 @@ GUI_ENTITIES_TO_IGNORE = {
     "Converter",
     "Processor",
     "EngineNode",
-    "Bridge",
+    "Engine",
     "EngineState",
 }
 GUI_NODE_IDS_TO_IGNORE = {

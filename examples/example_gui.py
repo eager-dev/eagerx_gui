@@ -3,7 +3,7 @@ import eagerx
 from eagerx.core.graph import Graph
 
 # Implementation specific
-import eagerx.bridges.openai_gym as eagerx_gym
+import eagerx.engines.openai_gym as eagerx_gym
 import eagerx.nodes
 
 if __name__ == "__main__":
@@ -36,19 +36,19 @@ if __name__ == "__main__":
     graph.render(source=obj.sensors.image, rate=10)
 
     # Open gui
-    obj.gui("GymBridge")
+    obj.gui("GymEngine")
     graph.gui()
 
-    # Define bridge
-    bridge = eagerx.Bridge.make(
-        "GymBridge",
+    # Define engine
+    engine = eagerx.Engine.make(
+        "GymEngine",
         rate=rate,
         sync=True,
         real_time_factor=1,
         process=eagerx.process.NEW_PROCESS,
     )
 
-    env = eagerx_gym.EagerxGym(name="rx", rate=rate, graph=graph, bridge=bridge)
+    env = eagerx_gym.EagerxGym(name="rx", rate=rate, graph=graph, engine=engine)
 
     # Turn on rendering
     env.render(mode="human")
