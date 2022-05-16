@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.5 (2022-05-16)
+### Fix
+* Update dependencies ([`99e88d6`](https://github.com/eager-dev/eagerx_gui/commit/99e88d6f310044eba42a3ff01443ed24f4366833))
+* Refactor bridge to engine ([`58fd2a2`](https://github.com/eager-dev/eagerx_gui/commit/58fd2a2c193771a589b91ccb59df0c1b82cbe791))
+
 ## v0.2.4 (2022-05-05)
 ### Fix
 * Skip "spec" keyword, add "initial_obs" to SpaceConverter ([`166c4aa`](https://github.com/eager-dev/eagerx_gui/commit/166c4aa034db305516423169405d4de1bcdb88e2))
