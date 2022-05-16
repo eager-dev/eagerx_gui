@@ -530,7 +530,7 @@ class CtrlWidget(QtWidgets.QWidget):
         self.ui.saveAsBtn.clicked.connect(self.save_as_clicked)
         self.ui.showChartBtn.toggled.connect(self.chart_toggled)
         self.ui.checkValidityBtn.clicked.connect(self.check_validity_toggled)
-        # self.ui.showCompatibleBridgesBtn.clicked.connect(self.show_compatible_bridges_toggled)
+        # self.ui.showCompatibleEnginesBtn.clicked.connect(self.show_compatible_engines_toggled)
 
         self.chart.sigFileLoaded.connect(self.set_current_file)
         self.chart.sigFileSaved.connect(self.file_saved)
@@ -579,19 +579,19 @@ class CtrlWidget(QtWidgets.QWidget):
     def _check_validity(self):
         self.chart._is_valid(state=self.chart.state())
 
-    # def show_compatible_bridges_toggled(self):
+    # def show_compatible_engines_toggled(self):
     #     try:
-    #         label_string = self.chart.check_exists_compatible_bridge(self.chart.state(), tablefmt="html")
+    #         label_string = self.chart.check_exists_compatible_engine(self.chart.state(), tablefmt="html")
     #     except Exception as e:
     #         label_string = str(e)
-    #     bridges_window = QtWidgets.QDialog(self.chart.widget().cwWin)
-    #     bridges_window.setWindowTitle("Compatible Bridges")
+    #     engines_window = QtWidgets.QDialog(self.chart.widget().cwWin)
+    #     engines_window.setWindowTitle("Compatible Engines")
     #     layout = QtWidgets.QGridLayout()
     #     label = QtWidgets.QLabel(label_string)
     #     label.setWordWrap(True)
     #     layout.addWidget(label)
-    #     bridges_window.setLayout(layout)
-    #     bridges_window.exec()
+    #     engines_window.setLayout(layout)
+    #     engines_window.exec()
 
     def set_current_file(self, file_name):
         self.current_file_name = file_name

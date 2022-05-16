@@ -59,7 +59,7 @@ The code used for this example is the following:
     # Register components (objects, nodes, converters, etc..)
     import eagerx.converters # Registers SpaceConverters
     import eagerx.nodes      # Registers butterworth_filter
-    import eagerx_ode        # Registers OdeBridge
+    import eagerx_ode        # Registers OdeEngine
     import eagerx_dcsc_setups.pendulum  # Registers Pendulum
 
     # Other
@@ -80,9 +80,9 @@ The code used for this example is the following:
         # Show in the gui
         graph.gui()
 
-        # Define bridge
-        bridge = eagerx.Bridge.make(
-            "OdeBridge",
+        # Define engine
+        engine = eagerx.Engine.make(
+            "OdeEngine",
             rate=rate,
             sync=True,
             real_time_factor=0,
@@ -104,7 +104,7 @@ The code used for this example is the following:
 
         # Initialize Environment
         env = Flatten(
-            eagerx.EagerxEnv(name="rx", rate=rate, graph=graph, bridge=bridge, step_fn=step_fn)
+            eagerx.EagerxEnv(name="rx", rate=rate, graph=graph, engine=engine, step_fn=step_fn)
         )
         env.render("human")
 
