@@ -5,12 +5,15 @@ import os
 os.environ["PYQTGRAPH_QT_LIB"] = "PyQt6"
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtWidgets
-from eagerx_gui.gui import Gui, EngineGui
+import pyqtgraph.exporters
 import sys
+import numpy as np
+from pyqtgraph.Qt import QtWidgets, QtGui
+from eagerx_gui.gui import Gui
+from pyvirtualdisplay import Display
 
 
-def launch_gui(state):
+def launch_gui(state, is_engine=False):
     app = QtWidgets.QApplication(sys.argv)
 
     ## Create main window with grid layout
@@ -21,7 +24,7 @@ def launch_gui(state):
     layout = QtWidgets.QGridLayout()
     cw.setLayout(layout)
 
-    rx_gui = Gui(state)
+    rx_gui = Gui(state, is_engine=is_engine)
     w = rx_gui.widget()
 
     # Add flowchart control panel to the main window
@@ -30,23 +33,23 @@ def launch_gui(state):
     win.show()
 
     app.exec()
-    new_state = rx_gui.state()
+    state["gui_state"] = rx_gui.graph._state["gui_state"]
     app.quit()
-    return new_state
+    return state
 
 
-def launch_engine_gui(state):
+def render_gui(state, is_engine=False):
     app = QtWidgets.QApplication(sys.argv)
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()
-    win.setWindowTitle("EAGERx EngineGraph")
+    win.setWindowTitle("EAGERx Graph")
     cw = QtWidgets.QWidget()
     win.setCentralWidget(cw)
     layout = QtWidgets.QGridLayout()
     cw.setLayout(layout)
 
-    rx_gui = EngineGui(state)
+    rx_gui = Gui(state, is_engine=is_engine)
     w = rx_gui.widget()
 
     # Add flowchart control panel to the main window
@@ -54,7 +57,26 @@ def launch_engine_gui(state):
 
     win.show()
 
-    app.exec()
-    new_state = rx_gui.state()
-    app.quit()
-    return new_state
+    exporter = pg.exporters.ImageExporter(w.view.scene())
+
+    display = Display(visible=False)
+    display.start()
+    png = exporter.export(toBytes=True)
+    display.stop()
+    png.convertToFormat(QtGui.QImage.Format.Format_RGB32)
+
+    width = png.width()
+    height = png.height()
+
+    ptr = png.bits()
+    ptr.setsize(height * width * 4)
+    arr = np.array(ptr).reshape(height, width, 4) # Copies the data
+    return arr[..., [2, 1, 0, 3]]
+
+
+def launch_engine_gui(state):
+    return launch_gui(state, is_engine=True)
+
+
+def render_engine_gui(state):
+    return render_gui(state, is_engine=True)

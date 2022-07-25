@@ -20,50 +20,8 @@ GUI_WIDGETS = {
             "actions": ["rate"],
             "observations": ["rate"],
         },
-        "items": {
-            "color": [
-                "black",
-                "red",
-                "green",
-                "yellow",
-                "blue",
-                "magenta",
-                "cyan",
-                "white",
-                "grey",
-            ],
-            "log_level": {
-                "silent": 0,
-                "debug": 10,
-                "info": 20,
-                "warn": 30,
-                "error": 40,
-                "fatal": 50,
-            },
-            "log_level_memory": {
-                "silent": 0,
-                "debug": 10,
-                "info": 20,
-                "warn": 30,
-                "error": 40,
-                "fatal": 50,
-            },
-            "process": {"new process": 0, "environment": 1, "engine": 2, "external": 3},
-        },
-        "constant": {
-            "all": list(set.union(TERMS_IN, TERMS_OUT, {"name", "entity_id", "launch_file"})),
-            "actions": ["process"],
-            "observations": ["process"],
-        },
     },
     "term": {
-        "items": {
-            "repeat": ["all", "empty", "window"],
-        },
-        "constant": {
-            "all": ["msg_type"],
-            "feedthroughs": ["space_converter"],
-        },
         "hide": {
             "all": ["address", "external_rate"],
             "states": ["converter"],
@@ -91,22 +49,4 @@ GUI_COLORS = {
     "magenta": [255, 0, 255],
     "cyan": [0, 255, 255],
     "white": [255, 255, 255],
-}
-
-# Config files to ignore in GUI
-GUI_ENTITIES_TO_IGNORE = {
-    "BaseConverter",
-    "SpaceConverter",
-    "Converter",
-    "Processor",
-    "EngineNode",
-    "Engine",
-    "EngineState",
-}
-GUI_NODE_IDS_TO_IGNORE = {
-    "Observations",
-    "Actions",
-    "Render",
-    "Supervisor",
-    "Environment",
 }
