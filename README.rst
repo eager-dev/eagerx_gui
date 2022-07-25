@@ -22,7 +22,7 @@ What is the *eagerx_gui* package?
 
 This repository/package provides GUI functionality for EAGERx.
 It allows to view graphs created using EAGERx, but also allows to create graphs interactively using the GUI.
-EAGERx (Engine Agnostic Gym Environments for Robotics) enables users to easily define new tasks, switch from one sensor to another, and switch from simulation to reality with a single line of code by being invariant to the physics engine.
+EAGERx (Engine Agnostic Graph Environments for Robotics) enables users to easily define new tasks, switch from one sensor to another, and switch from simulation to reality with a single line of code by being invariant to the physics engine.
 
 `The core repository is available here <https://github.com/eager-dev/eagerx>`_.
 
@@ -36,10 +36,6 @@ You can install the package using pip:
 .. code:: shell
 
     pip3 install eagerx-gui
-
-.. note::
-    EAGERx depends on a minimal ROS installation. Fortunately, you **can** use eagerx anywhere as you would any python package,
-    so it does **not** impose a ROS package structure on your project.
 
 Example
 #######
@@ -125,7 +121,7 @@ If you are using EAGERx for your scientific publications, please cite:
 
     @article{eagerx,
         author  = {van der Heijden, Bas and Luijkx, Jelle, and Ferranti, Laura and Kober, Jens and Babuska, Robert},
-        title = {EAGERx: Engine Agnostic Gym Environment for Robotics},
+        title = {EAGERx: Engine Agnostic Graph Environments for Robotics},
         year = {2022},
         publisher = {GitHub},
         journal = {GitHub repository},
