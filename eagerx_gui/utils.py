@@ -1,7 +1,7 @@
 import numpy as np
 import networkx as nx
 import ast
-from eagerx.utils.utils import get_attribute_from_module
+
 
 def tryeval(val):
     try:
@@ -29,21 +29,6 @@ def get_yaml_type(yaml):
     else:
         type = "object"
     return type
-
-
-def get_nodes_and_objects_library():
-    # import eagerx.converters.space_ros_converters
-    # import eagerx.engines.openai_gym.converters
-    from eagerx.core.register import REGISTRY
-
-    library = dict()
-    for entity_cls, entities in REGISTRY.items():
-        library[entity_cls.__name__] = []
-        for id, entry in entities.items():
-            spec = entry["spec"]
-            cls = get_attribute_from_module(entry["cls"])
-            library[entity_cls.__name__].append({"entity_id": id, "spec": spec, "entity_cls": entity_cls, "cls": cls})
-    return library
 
 
 def get_connected_nodes(state, node):
@@ -119,7 +104,13 @@ def add_pos_to_state(state, is_engine=False):
     """
     # Initialize fixed nodes
     left_nodes = {"actuators"} if is_engine else {"env/actions"}
-    right_nodes = {"sensors"} if is_engine else {"env/observations", "env/render"}
+    if is_engine:
+        right_nodes = {"sensors"}
+    elif "env/render" in state["nodes"].keys():
+        right_nodes = {"env/observations", "env/render"}
+    else:
+        right_nodes = {"env/observations"}
+
     fixed_nodes = set.union(left_nodes, right_nodes)
     node_size = 150
     

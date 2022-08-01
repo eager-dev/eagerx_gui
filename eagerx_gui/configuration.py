@@ -23,21 +23,14 @@ GUI_WIDGETS = {
     },
     "term": {
         "hide": {
-            "all": ["address", "external_rate"],
-            "states": ["converter"],
-            "targets": ["space_converter"],
-            "sensors": ["start_with_msg"],
-            "actions": ["start_with_msg", "space_converter"],
-            "observations": ["sync", "rate", "space_converter"],
+            "all": ["address"],
+            "states": ["processor"],
+            "observations": ["sync", "rate"],
             "outputs": ["rate"],
             "inputs": ["rate"],
         },
     },
 }
-
-ENGINE_GUI_WIDGETS = deepcopy(GUI_WIDGETS)
-ENGINE_GUI_WIDGETS["term"]["hide"]["all"].remove("external_rate")
-ENGINE_GUI_WIDGETS["term"]["hide"]["sensors"].append("external_rate")
 
 # Corresponding RGB values for colors
 GUI_COLORS = {

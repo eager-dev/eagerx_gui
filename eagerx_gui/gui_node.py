@@ -20,23 +20,28 @@ translate = QtCore.QCoreApplication.translate
 class RxGuiNode(QtCore.QObject):
     sigTerminalAdded = QtCore.Signal(object, object)  # self, term
 
-    def __init__(self, name, graph):
+    def __init__(self, name, gui):
         QtCore.QObject.__init__(self)
         self.name = name
         self._graphics_item = None
         self.terminals = OrderedDict()
         self.inputs = OrderedDict()
         self.outputs = OrderedDict()
-        self.gui = graph
+        self.gui = gui
+        self.spec = self.gui.graph.get_spec(name).config
 
         if self.gui.is_engine:
             self.is_object = False
             self.node_type = "engine_node"
-        elif self.params()["entity_id"] in ["Actions", "Observations", "Render"]:
-            self.node_type = self.params()["entity_id"].lower()
-            self.is_object = False
+        elif self.params()["entity_id"].startswith("eagerx.core.nodes"):
+            node_id = self.params()["entity_id"].split("/")[-1]
+            if node_id in ["ActionsNode", "ObservationsNode", "RenderNode"]:
+                # todo: check if sensors actuators should be added here
+                # todo: change entity_id format to new refactored style
+                self.node_type = node_id.lower()[:-4]
+                self.is_object = False
         else:
-            self.node_type = get_yaml_type(self.default_params())
+            self.node_type = get_yaml_type(self.gui.graph.get_spec(name).params)
         self.allow_remove = True
         self.allow_add_terminal = False
         self.__initialize_terminals()
@@ -56,9 +61,11 @@ class RxGuiNode(QtCore.QObject):
                 continue
             if terminal_type in self.params():
                 for terminal in self.params()[terminal_type]:
-                    if self.node_type in ["actions", "observations"]:
-                        if terminal in self.default_params()[terminal_type]:
-                            continue
+                    # Filter out terminals step, and set for actions, observations and render nodes
+                    if (self.node_type == "actions" and (terminal_type == "inputs" or terminal == "set")) or (
+                            self.node_type in ["observations", "render"] and terminal_type == "outputs") or (
+                        self.node_type == "observations" and terminal == "actions_set"):
+                        continue
                     name = terminal_type + "/" + terminal
                     self.add_terminal(name=name)
                     if self.node_type == "reset_node" and terminal_type == "outputs":
@@ -66,14 +73,7 @@ class RxGuiNode(QtCore.QObject):
                         self.add_terminal(name=name)
 
     def params(self):
-        return self._get_params()
-
-    def _get_params(self):
-        assert self.name in self.gui.graph._state["nodes"], f" No entity with name '{self.name}' in graph."
-        return self.gui.graph._state["nodes"][self.name]["config"]
-
-    def default_params(self):
-        return self.gui.graph._state["backup"][self.name]
+        return self.spec.to_dict()
 
     def get_view(self):
         return self.gui.get_view(self.name, depth=["config"])
@@ -303,8 +303,16 @@ class NodeGraphicsItem(GraphicsObject):
     def mouseDoubleClickEvent(self, ev):
         if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
-            param_window = ParamWindow(node=self.node)
-            param_window.open()
+            # todo: find out which keys to suppress in dialog
+            filter = []
+            widgets_to_hide = configuration.GUI_WIDGETS["node"]["hide"]
+            for key in self.node.params().keys():
+                if key in widgets_to_hide["all"]:
+                    filter.append(key)
+                elif self._node_type in widgets_to_hide and key in widgets_to_hide[self._node_type]:
+                    filter.append(key)
+            param_window = ParamWindow(spec=self.node.spec, parent=self.parent(), filter=filter)
+            param_window.exec()
             param_window.close()
 
     def mouseDragEvent(self, ev):

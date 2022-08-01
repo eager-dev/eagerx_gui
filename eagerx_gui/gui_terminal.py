@@ -36,6 +36,9 @@ class GuiTerminal(object):
         self.is_renamable = False
         self.is_connectable = False
 
+        # todo: Check if we want to show different parameters if feedthrough (e.g. of the corresponding output)
+        self.spec = getattr(getattr(node.gui.graph.get_spec(node.name), self.terminal_type), self.terminal_name)
+
         self._graphicsItem = TerminalGraphicsItem(self, parent=self.node.graphics_item())
         self.recolor()
 
@@ -51,14 +54,7 @@ class GuiTerminal(object):
         self.node.connected(self, term)
 
     def params(self):
-        view = self.connection_view()
-        params = view.to_dict()
-        if self.terminal_type == "feedthroughs":
-            view = self.node.gui.tuple_to_view((self.node.name, "outputs", self.terminal_name))
-            output_params = view.to_dict()
-            params["msg_type"] = output_params["msg_type"]
-            params["space_converter"] = output_params["space_converter"]
-        return params
+        return self.spec.to_dict()
 
     def is_connected(self):
         return len(self.connections) > 0
@@ -193,8 +189,17 @@ class TerminalGraphicsItem(GraphicsObject):
     def mouseDoubleClickEvent(self, ev):
         if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
-            param_window = ParamWindow(node=self.term.node, term=self.term)
-            param_window.open()
+            # todo: find out which keys to suppress in dialog
+            filter = []
+            terminal_type = self.term.terminal_type
+            widgets_to_hide = configuration.GUI_WIDGETS["term"]["hide"]
+            for key in self.term.params().keys():
+                if key in widgets_to_hide["all"]:
+                    filter.append(key)
+                elif terminal_type in widgets_to_hide and key in widgets_to_hide[terminal_type]:
+                    filter.append(key)
+            param_window = ParamWindow(spec=self.term.spec, parent=self.parent(), filter=filter)
+            param_window.exec()
             param_window.close()
 
     def raise_context_menu(self, ev):

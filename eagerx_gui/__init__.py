@@ -38,7 +38,10 @@ def launch_gui(state, is_engine=False):
     return state
 
 
-def render_gui(state, is_engine=False):
+def render_gui(state, shape=None, is_engine=False):
+    if shape is None:
+        shape = [1920, 1080]
+
     app = QtWidgets.QApplication(sys.argv)
 
     ## Create main window with grid layout
@@ -58,6 +61,8 @@ def render_gui(state, is_engine=False):
     win.show()
 
     exporter = pg.exporters.ImageExporter(w.view.scene())
+    exporter.parameters()["width"] = shape[0]
+    exporter.parameters()["height"] = shape[1]
 
     display = Display(visible=False)
     display.start()

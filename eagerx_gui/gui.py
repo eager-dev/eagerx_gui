@@ -2,8 +2,6 @@
  Adapted from https://github.com/pyqtgraph/pyqtgraph/blob/master/pyqtgraph/flowchart/Flowchart.py
 """
 
-# -*- coding: utf-8 -*-
-
 # Import pyqtgraph modules
 from pyqtgraph.graphicsItems.GraphicsObject import GraphicsObject
 from pyqtgraph.Qt import QtCore, QtWidgets
@@ -16,15 +14,13 @@ from eagerx.core.graph_engine import EngineGraph
 
 # eagerx_gui imports
 from eagerx_gui import configuration
-from eagerx_gui.utils import get_nodes_and_objects_library, add_pos_to_state
+from eagerx_gui.utils import add_pos_to_state
 from eagerx_gui import gui_view
 from eagerx_gui.gui_node import RxGuiNode, NodeGraphicsItem
 from eagerx_gui.gui_terminal import TerminalGraphicsItem, ConnectionItem
 
 
 class Gui(QtCore.QObject):
-    library = get_nodes_and_objects_library()
-
     def __init__(self, state, is_engine=False):
         super().__init__()
         self.graph = Graph(state=state) if not is_engine else EngineGraph(state=state)
@@ -40,7 +36,7 @@ class Gui(QtCore.QObject):
 
     def create_node(self, name, pos):
         """Create a new Node and add it to this flowchart."""
-        node = RxGuiNode(name, graph=self)
+        node = RxGuiNode(name, gui=self)
         self.add_node(node, name, pos)
         return node
 
