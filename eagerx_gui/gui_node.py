@@ -230,7 +230,8 @@ class NodeGraphicsItem(GraphicsObject):
         inp = self.node.inputs
         y = self.nameItem.boundingRect().height() + 5
         max_width_inp = 0.0
-        for i, t in inp.items():
+        for i in sorted(inp.keys()):
+            t = inp[i]
             item = t.graphics_item()
             item.setParentItem(self)
             br = self.bounds
@@ -245,7 +246,8 @@ class NodeGraphicsItem(GraphicsObject):
         dy = bounds.height() / (len(out) + 1)
         y = self.nameItem.boundingRect().height() + 5
         max_width_out = 0.0
-        for i, t in out.items():
+        for i in sorted(out.keys()):
+            t = out[i]
             item = t.graphics_item()
             item.setParentItem(self)
             item.setZValue(self.initial_z_value)
@@ -260,8 +262,8 @@ class NodeGraphicsItem(GraphicsObject):
         if y_max > bounds.height() - 5:
             self.bounds = QtCore.QRectF(0, 0, self.bounds.width(), y_max + 6.0)
 
-        if max_width_inp + max_width_out > bounds.width() + 10:
-            self.bounds = QtCore.QRectF(0, 0, max_width_inp + max_width_out + 10.0, self.bounds.height())
+        if max_width_inp + max_width_out > bounds.width() - 10:
+            self.bounds = QtCore.QRectF(0, 0, max_width_inp + max_width_out + 11.0, self.bounds.height())
             self.update_terminals()
         self.update()
 
