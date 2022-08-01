@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.6 (2022-08-01)
+### Fix
+* Update gui because of refactoring in new eagerx version ([`bdda38c`](https://github.com/eager-dev/eagerx_gui/commit/bdda38c50b26aa0cc152e58826625f8fcec3e2f8))
+
+### Documentation
+* Update readme because example was outdated with new changes ([`0187264`](https://github.com/eager-dev/eagerx_gui/commit/01872645377d2321e29e9eb7fd8709e3195ba433))
+
 ## v0.2.5 (2022-05-16)
 ### Fix
 * Update dependencies ([`99e88d6`](https://github.com/eager-dev/eagerx_gui/commit/99e88d6f310044eba42a3ff01443ed24f4366833))
