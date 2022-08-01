@@ -8,18 +8,7 @@ from pyqtgraph import functions as fn
 from pyqtgraph.Point import Point
 
 from eagerx_gui import configuration
-from eagerx_gui.pyqtgraph_utils import (
-    exception_handler,
-    ConnectionDialog,
-    ParamWindow,
-    ConverterDialog,
-)
-from eagerx.utils.utils import (
-    get_module_type_string,
-    get_opposite_msg_cls,
-    get_attribute_from_module,
-)
-from eagerx.core.converters import Identity
+from eagerx_gui.pyqtgraph_utils import ParamWindow
 
 
 class GuiTerminal(object):
@@ -43,18 +32,18 @@ class GuiTerminal(object):
         self.is_input = self.terminal_type in configuration.TERMS_IN
         self.is_state = self.terminal_type in ["targets", "states"]
         self.is_feedthrough = self.terminal_type == "feedthroughs"
-        self.is_removable = node.is_object or self.node_type in [
-            "actions",
-            "observations",
-        ]
-        self.is_renamable = self.node_type in ["actions", "observations"]
-        self.is_connectable = not (self.node_type == "engine_node" or (self.terminal_type == "states" and not node.is_object))
+        self.is_removable = False
+        self.is_renamable = False
+        self.is_connectable = False
+
+        # todo: Check if we want to show different parameters if feedthrough (e.g. of the corresponding output)
+        self.spec = getattr(getattr(node.gui.graph.get_spec(node.name), self.terminal_type), self.terminal_name)
 
         self._graphicsItem = TerminalGraphicsItem(self, parent=self.node.graphics_item())
         self.recolor()
 
     def connection_view(self):
-        return self.node.graph.tuple_to_view(self.connection_tuple())
+        return self.node.gui.tuple_to_view(self.connection_tuple())
 
     def connection_tuple(self):
         return (self.node.name, self.terminal_type, self.terminal_name)
@@ -64,31 +53,8 @@ class GuiTerminal(object):
         (note--this function is called on both terminals)"""
         self.node.connected(self, term)
 
-    def disconnected(self, term):
-        """Called whenever this terminal has been disconnected from another.
-        (note--this function is called on both terminals)"""
-        self.node.disconnected(self, term)
-
     def params(self):
-        return self._get_params(graph_backup=self.node.graph)
-
-    @exception_handler
-    def _get_params(self):
-        view = self.connection_view()
-        params = view.to_dict()
-        if self.terminal_type == "feedthroughs":
-            view = self.node.graph.tuple_to_view((self.node.name, "outputs", self.terminal_name))
-            output_params = view.to_dict()
-            params["msg_type"] = output_params["msg_type"]
-            params["space_converter"] = output_params["space_converter"]
-        return params
-
-    def set_param(self, parameter, value):
-        self._set_param(parameter, value, graph_backup=self.node.graph)
-
-    @exception_handler
-    def _set_param(self, parameter, value):
-        self.node.graph.set(value, self.connection_view(), parameter=parameter)
+        return self.spec.to_dict()
 
     def is_connected(self):
         return len(self.connections) > 0
@@ -113,104 +79,6 @@ class GuiTerminal(object):
         """Return the list of nodes which receive input from this terminal."""
         return set([t.node for t in self.connections if t.is_input])
 
-    @exception_handler
-    def connect_to(self, term, connection_item):
-        assert not self.connected_to(term), "Already connected"
-        assert term is not self, "Not connecting terminal to self"
-        assert term.node is not self.node, "Cannot connect to terminal on same node."
-        assert term.is_state == self.is_state, "Cannot connect states to other types than targets."
-        assert not term.is_input == self.is_input, "Cannot connect input with input or output with output."
-        for t in [self, term]:
-            assert not (
-                t.is_input and t.is_connected()
-            ), "Cannot connect %s <-> %s: Terminal %s is already connected to %s" % (
-                self,
-                term,
-                t,
-                list(t.connections.keys()),
-            )
-
-        input_term, output_term = (self, term) if self.is_input else (term, self)
-
-        assert not (
-            output_term.node_type == "actions" and input_term.node_type == "observations"
-        ), "Cannot connect actions directly to observations."
-
-        source = output_term.connection_view()
-        target = input_term.connection_view()
-
-        space_converter = None
-
-        observation = target()[2] if target()[0] == "env/observations" else None
-        action = source()[2] if source()[0] == "env/actions" else None
-        target_params = target.to_dict()
-        source_params = source.to_dict()
-        identity_converter = {"converter_type": get_module_type_string(Identity)}
-        if len(target_params) == 0:
-            # If the target is an observation, we need to get the space_converter from the source
-            converter = source_params["space_converter"] if "space_converter" in source_params else identity_converter
-            converter = converter if converter is not None else identity_converter
-            delay, window = 0.0, 0
-        else:
-            if len(source_params) == 0:
-                # If action has no converter, we first open a dialog in which the user can modify the space converter
-                parent = self.node.graph.widget().cwWin
-                library = self.node.graph.library
-                msg_type_out = None
-                if "converter" in target_params and target_params["converter"] is not None:
-                    msg_type_in = get_opposite_msg_cls(target_params["msg_type"], target_params["converter"])
-                else:
-                    msg_type_in = get_attribute_from_module(target_params["msg_type"])
-                space_converter = target_params["space_converter"] if target_params["space_converter"] else identity_converter
-                space_converter_dialog = ConverterDialog(
-                    space_converter,
-                    parent,
-                    library,
-                    msg_type_in,
-                    msg_type_out,
-                    is_space_converter=True,
-                )
-                space_converter_dialog.setWindowTitle("Space Converter {}".format(output_term.terminal_name))
-                space_converter = space_converter_dialog.open()
-            delay = target_params["delay"] if "delay" in target_params else None
-            window = target_params["window"] if "window" in target_params else None
-            converter = target_params["converter"] if "converter" in target_params else identity_converter
-            converter = converter if converter is not None else identity_converter
-        connect_params = connection_item.open_connection_dialog(converter=converter, delay=delay, window=window)
-        target = None if observation else target
-        source = None if action else source
-
-        # Convert source and target to new API (i.e. use Lookup)
-        self.node.graph.connect(
-            source=source,
-            target=target,
-            action=action,
-            observation=observation,
-            **connect_params,
-        )
-
-        if space_converter is not None:
-            output_term.set_param("converter", space_converter)
-
-        self.connections[term] = connection_item
-        term.connections[self] = connection_item
-
-        self.connected(term)
-        term.connected(self)
-
-        return connection_item
-
-    def disconnect_from(self, term):
-        if not self.connected_to(term):
-            return
-        item = self.connections[term]
-        item.close()
-        del self.connections[term]
-        del term.connections[self]
-
-        self.disconnected(term)
-        term.disconnected(self)
-
     def disconnect_all(self):
         for t in list(self.connections.keys()):
             self.disconnect_from(t)
@@ -232,38 +100,11 @@ class GuiTerminal(object):
             for t in self.connections:
                 t.recolor(color, recurse=False)
 
-    def rename(self, name):
-        if self.is_input:
-            if name in self.node.inputs:
-                self.graphics_item().term_renamed(self.name)
-                return
-        elif name in self.node.outputs:
-            self.graphics_item().term_renamed(self.name)
-            return
-        node_name, _, old_name = self.connection_tuple()
-        if node_name == "env/actions":
-            self.node.graph.rename(new=name.split("/")[-1], action=old_name)
-        elif node_name == "env/observations":
-            self.node.graph.rename(new=name.split("/")[-1], observation=old_name)
-        else:
-            raise NotImplementedError("Can only change terminal names for actions and observations.")
-        old_name = self.name
-        self.name = name
-        self.terminal_name = name.split("/")[-1]
-        self.node.terminal_renamed(self, old_name)
-        self.graphics_item().term_renamed(name)
-
     def __repr__(self):
         return "<Terminal %s.%s>" % (str(self.node.name), str(self.terminal_name))
 
     def __hash__(self):
         return id(self)
-
-    def close(self):
-        self.disconnect_all()
-        item = self.graphics_item()
-        if item.scene() is not None:
-            item.scene().removeItem(item)
 
 
 class TextItem(QtWidgets.QGraphicsTextItem):
@@ -277,10 +118,6 @@ class TextItem(QtWidgets.QGraphicsTextItem):
             self.on_update()
 
     def keyPressEvent(self, ev):
-        if ev.key() == QtCore.Qt.Key.Key_Enter or ev.key() == QtCore.Qt.Key.Key_Return:
-            if self.on_update is not None:
-                self.on_update()
-                return
         super().keyPressEvent(ev)
 
 
@@ -290,15 +127,11 @@ class TerminalGraphicsItem(GraphicsObject):
         GraphicsObject.__init__(self, parent)
         self.brush = fn.mkBrush(0, 0, 0)
         self.box = QtWidgets.QGraphicsRectItem(0, 0, 10, 10, self)
-        on_update = self.label_changed if self.term.is_renamable else None
+        on_update = None
         self.label = TextItem(self.term.terminal_name, self, on_update)
         self.label.setScale(0.7)
         self.newConnection = None
         self.setFiltersChildEvents(True)  # to pick up mouse events on the rectitem
-        if self.term.is_renamable:
-            self.label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextEditorInteraction)
-            self.label.focusOutEvent = self.label_focus_out
-            self.label.keyPressEvent = self.label_key_press
         self.setZValue(1)
         self.menu = None
 
@@ -312,39 +145,9 @@ class TerminalGraphicsItem(GraphicsObject):
         else:
             QtWidgets.QGraphicsTextItem.keyPressEvent(self.label, ev)
 
-    def label_changed(self):
-        new_name = str(self.label.toPlainText())
-        if new_name != self.term.terminal_name:
-            new_name = self.term.terminal_type + "/" + new_name
-            self.term.rename(new_name)
-
-    def term_renamed(self, name):
-        self.label.setPlainText(name.split("/")[-1])
-
     def setBrush(self, brush):
         self.brush = brush
         self.box.setBrush(brush)
-
-    def disconnect(self, target):
-        input_term, output_term = (self.term, target.term) if self.term.is_input else (target.term, self.term)
-        if output_term.node_type == "actions":
-            self.term.node.graph.disconnect(
-                action=output_term.terminal_name,
-                target=input_term.connection_view(),
-                remove=False,
-            )
-        elif input_term.node_type == "observations":
-            self.term.node.graph.disconnect(
-                source=output_term.connection_view(),
-                observation=input_term.terminal_name,
-                remove=False,
-            )
-        else:
-            self.term.node.graph.disconnect(
-                source=output_term.connection_view(),
-                target=input_term.connection_view(),
-            )
-        self.term.disconnect_from(target.term)
 
     def boundingRect(self):
         br = self.box.mapRectToParent(self.box.boundingRect())
@@ -373,7 +176,6 @@ class TerminalGraphicsItem(GraphicsObject):
             c.update_line()
 
     def mousePressEvent(self, ev):
-        # ev.accept()
         ev.ignore()  # necessary to allow click/drag events to process correctly
 
     def mouseClickEvent(self, ev):
@@ -387,73 +189,25 @@ class TerminalGraphicsItem(GraphicsObject):
     def mouseDoubleClickEvent(self, ev):
         if ev.button() == QtCore.Qt.MouseButton.LeftButton:
             ev.accept()
-            param_window = ParamWindow(node=self.term.node, term=self.term)
-            param_window.open()
+            # todo: find out which keys to suppress in dialog
+            filter = []
+            terminal_type = self.term.terminal_type
+            widgets_to_hide = configuration.GUI_WIDGETS["term"]["hide"]
+            for key in self.term.params().keys():
+                if key in widgets_to_hide["all"]:
+                    filter.append(key)
+                elif terminal_type in widgets_to_hide and key in widgets_to_hide[terminal_type]:
+                    filter.append(key)
+            param_window = ParamWindow(spec=self.term.spec, parent=self.parent(), filter=filter)
+            param_window.exec()
             param_window.close()
 
     def raise_context_menu(self, ev):
         # only raise menu if this terminal is removable
-        menu = self.get_menu()
-        pos = ev.screenPos()
-        menu.popup(QtCore.QPoint(pos.x(), pos.y()))
-
-    def get_menu(self):
-        self.menu = QtWidgets.QMenu()
-        self.menu.setTitle("Terminal")
-        rem_act = QtGui.QAction("Remove {}".format(self.term.terminal_name), self.menu)
-        rem_act.triggered.connect(self.remove_self)
-        self.menu.addAction(rem_act)
-        self.menu.remAct = rem_act
-        if not self.term.is_removable:
-            rem_act.setEnabled(False)
-        return self.menu
-
-    def remove_self(self):
-        if self.term.node_type == "actions":
-            self.term.node.graph.remove_component(action=self.term.terminal_name)
-        elif self.term.node_type == "observations":
-            self.term.node.graph.remove_component(observation=self.term.terminal_name)
-        else:
-            self.term.node.graph.remove_component(self.term.connection_view())
-        self.term.node.remove_terminal(self.term)
+        ev.ignore()
 
     def mouseDragEvent(self, ev):
-        if ev.button() != QtCore.Qt.MouseButton.LeftButton:
-            ev.ignore()
-            return
-        if not self.term.is_connectable:
-            return
-        ev.accept()
-        if ev.isStart():
-            if self.newConnection is None:
-                self.newConnection = ConnectionItem(self)
-                self.getViewBox().addItem(self.newConnection)
-
-            self.newConnection.set_target(self.mapToView(ev.pos()))
-        elif ev.isFinish():
-            if self.newConnection is not None:
-                items = self.scene().items(ev.scenePos())
-                got_target = False
-                for i in items:
-                    if isinstance(i, TerminalGraphicsItem):
-                        self.newConnection.set_target(i)
-                        try:
-                            self.term.connect_to(
-                                i.term,
-                                self.newConnection,
-                                graph_backup=self.term.node.graph,
-                            )
-                            got_target = True
-                        except Exception:
-                            got_target = False
-                        break
-
-                if not got_target:
-                    self.newConnection.close()
-                self.newConnection = None
-        else:
-            if self.newConnection is not None:
-                self.newConnection.set_target(self.mapToView(ev.pos()))
+        return
 
     def hoverEvent(self, ev):
         if not ev.isExit() and ev.acceptDrags(QtCore.Qt.MouseButton.LeftButton):
@@ -509,17 +263,6 @@ class ConnectionItem(GraphicsObject):
         self.source.getViewBox().addItem(self)
         self.update_line()
 
-    def open_connection_dialog(self, **kwargs):
-        input_term, output_term = (
-            (self.source.term, self.target.term) if self.source.term.is_input else (self.target.term, self.source.term)
-        )
-        self.connection_window = ConnectionDialog(input_term=input_term, output_term=output_term, **kwargs)
-        return self.connection_window.open()
-
-    def close(self):
-        if self.scene() is not None:
-            self.scene().removeItem(self)
-
     def set_target(self, target):
         self.target = target
         self.update_line()
@@ -537,7 +280,7 @@ class ConnectionItem(GraphicsObject):
             stop = Point(self.target.connect_point())
             input_term = self.target.term if self.target.term.is_input else self.source.term
             node_name = input_term.node.name
-            linestyle_state = input_term.node.graph._state["gui_state"][node_name]["linestyle"]
+            linestyle_state = input_term.node.gui.graph._state["gui_state"][node_name]["linestyle"]
             if input_term.name in linestyle_state:
                 shape = linestyle_state[input_term.name]
             else:
@@ -575,19 +318,7 @@ class ConnectionItem(GraphicsObject):
             ev.ignore()
             return
 
-        if ev.key() == QtCore.Qt.Key.Key_Delete or ev.key() == QtCore.Qt.Key.Key_Backspace:
-            if self.source.term.node_type == "engine_node":
-                ev.ignore()
-                return
-            self.source.disconnect(self.target)
-            ev.accept()
-            if isinstance(self.target, TerminalGraphicsItem):
-                # Remove linestyle from gui state on removal
-                input_term = self.target.term if self.target.term.is_input else self.source.term
-                node_name = input_term.node.name
-                if input_term.name in input_term.node.graph._state["gui_state"][node_name]["linestyle"]:
-                    input_term.node.graph._state["gui_state"][node_name]["linestyle"].pop(input_term.name)
-        elif ev.key() == QtCore.Qt.Key.Key_Control:
+        if ev.key() == QtCore.Qt.Key.Key_Control:
             ev.accept()
             if self.style["shape"] == "line":
                 shape = "cubic"
@@ -597,7 +328,7 @@ class ConnectionItem(GraphicsObject):
                 # Update linestyle in gui state
                 input_term = self.target.term if self.target.term.is_input else self.source.term
                 node_name = input_term.node.name
-                input_term.node.graph._state["gui_state"][node_name]["linestyle"][input_term.name] = shape
+                input_term.node.gui.graph._state["gui_state"][node_name]["linestyle"][input_term.name] = shape
                 self.setStyle(shape=shape)
         else:
             ev.ignore()

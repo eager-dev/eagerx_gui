@@ -28,15 +28,4 @@ class RxViewBox(ViewBox):
         self.widget = widget
 
     def getMenu(self, ev):
-        # called by ViewBox to create a new context menu
-        self._fc_menu = QtGui.QMenu()
-        self._subMenus = self.getContextMenus(ev)
-        for menu in self._subMenus:
-            self._fc_menu.addMenu(menu)
-        return self._fc_menu
-
-    def getContextMenus(self, ev):
-        # called by scene to add menus on to someone else's context menu
-        menus = self.widget.buildMenu(ev.scenePos())
-        menus.append(ViewBox.getMenu(self, ev))
-        return menus
+        return QtGui.QMenu()
