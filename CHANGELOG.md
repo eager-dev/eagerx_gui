@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.7 (2022-08-01)
+### Fix
+* Alphabetically order nodes and terminals in gui ([`7bfddce`](https://github.com/eager-dev/eagerx_gui/commit/7bfddcee0a7f0be6b88b0eb8f0e2acaf4ff7c5c2))
+
 ## v0.2.6 (2022-08-01)
 ### Fix
 * Update gui because of refactoring in new eagerx version ([`bdda38c`](https://github.com/eager-dev/eagerx_gui/commit/bdda38c50b26aa0cc152e58826625f8fcec3e2f8))
