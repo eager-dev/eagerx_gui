@@ -113,7 +113,6 @@ def add_pos_to_state(state, is_engine=False):
 
     fixed_nodes = set.union(left_nodes, right_nodes)
     node_size = 150
-    
 
     # Check for which nodes the position is prescribed
     G = nx.Graph()
@@ -254,8 +253,12 @@ def add_pos_to_state(state, is_engine=False):
             if source_name in loose_cluster:
                 G.add_edge(source_name, target_name)
         position_dict = nx.spring_layout(G, k=1)
-        height = abs(np.max(np.array(list(position_dict.values()))[:, 1]) + np.min(np.array(list(position_dict.values()))[:, 1]) +
-                  2) * node_size
+        height = (
+            abs(
+                np.max(np.array(list(position_dict.values()))[:, 1]) + np.min(np.array(list(position_dict.values()))[:, 1]) + 2
+            )
+            * node_size
+        )
         y_offset += height // 2
         if np.min(np.array(list(position_dict.values()))[:, 1]) * node_size < 0:
             y_offset += abs(np.min(np.array(list(position_dict.values()))[:, 1]) * node_size)

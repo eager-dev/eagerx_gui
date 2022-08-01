@@ -62,9 +62,11 @@ class RxGuiNode(QtCore.QObject):
             if terminal_type in self.params():
                 for terminal in self.params()[terminal_type]:
                     # Filter out terminals step, and set for actions, observations and render nodes
-                    if (self.node_type == "actions" and (terminal_type == "inputs" or terminal == "set")) or (
-                            self.node_type in ["observations", "render"] and terminal_type == "outputs") or (
-                        self.node_type == "observations" and terminal == "actions_set"):
+                    if (
+                        (self.node_type == "actions" and (terminal_type == "inputs" or terminal == "set"))
+                        or (self.node_type in ["observations", "render"] and terminal_type == "outputs")
+                        or (self.node_type == "observations" and terminal == "actions_set")
+                    ):
                         continue
                     name = terminal_type + "/" + terminal
                     self.add_terminal(name=name)

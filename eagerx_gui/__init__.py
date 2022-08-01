@@ -75,7 +75,7 @@ def render_gui(state, shape=None, is_engine=False):
 
     ptr = png.bits()
     ptr.setsize(height * width * 4)
-    arr = np.array(ptr).reshape(height, width, 4) # Copies the data
+    arr = np.array(ptr).reshape(height, width, 4)  # Copies the data
     return arr[..., [2, 1, 0, 3]]
 
 

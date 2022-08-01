@@ -55,4 +55,3 @@ class ParamWindow(QtWidgets.QDialog):
             parent=self.parent,
         )
         dialog.exec()
-
