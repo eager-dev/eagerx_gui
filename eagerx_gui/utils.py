@@ -198,7 +198,7 @@ def add_pos_to_state(state, is_engine=False):
 
     fixed_positions = dict()
     for fixed_cluster in fixed_clusters:
-        for node in fixed_cluster:
+        for node in sorted(fixed_cluster):
             params = state["nodes"][node]
             gui_state = state["gui_state"][node]
             if params["config"]["name"] in fixed_nodes:
@@ -212,7 +212,7 @@ def add_pos_to_state(state, is_engine=False):
                     pos = [x_max, 0]
                 fixed_positions[node] = pos
     for fixed_cluster in fixed_clusters:
-        for node in fixed_cluster:
+        for node in sorted(fixed_cluster):
             params = state["nodes"][node]
             if not params["config"]["name"] in fixed_nodes:
                 for key, clusters in left_connected_clusters.items():
@@ -245,7 +245,7 @@ def add_pos_to_state(state, is_engine=False):
     x_offset = x_max // 2
     for loose_cluster in loose_clusters:
         G = nx.Graph()
-        for node in loose_cluster:
+        for node in sorted(loose_cluster):
             G.add_node(node)
         for source, target in state["connects"]:
             source_name, _, _ = source
