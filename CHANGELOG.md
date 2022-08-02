@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.8 (2022-08-02)
+### Fix
+* Make compatible with pyqt5 and with colab render node ([`d05fc0b`](https://github.com/eager-dev/eagerx_gui/commit/d05fc0ba5fe42be51f160ee71a7b7fb1ab5bb097))
+
 ## v0.2.7 (2022-08-01)
 ### Fix
 * Alphabetically order nodes and terminals in gui ([`7bfddce`](https://github.com/eager-dev/eagerx_gui/commit/7bfddcee0a7f0be6b88b0eb8f0e2acaf4ff7c5c2))
