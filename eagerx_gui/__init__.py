@@ -2,7 +2,14 @@ __version__ = "0.2.7"
 
 import os
 
-os.environ["PYQTGRAPH_QT_LIB"] = "PyQt6"
+# Set PyQt backend
+for lib in ["PyQt6", "PyQt5"]:
+    try:
+        __import__(lib)
+        os.environ["PYQTGRAPH_QT_LIB"] = lib
+        break
+    except ImportError:
+        pass
 
 import pyqtgraph as pg
 import pyqtgraph.exporters
@@ -10,7 +17,6 @@ import sys
 import numpy as np
 from pyqtgraph.Qt import QtWidgets, QtGui
 from eagerx_gui.gui import Gui
-from pyvirtualdisplay import Display
 
 
 def launch_gui(state, is_engine=False):
@@ -64,10 +70,7 @@ def render_gui(state, shape=None, is_engine=False):
     exporter.parameters()["width"] = shape[0]
     exporter.parameters()["height"] = shape[1]
 
-    display = Display(visible=False)
-    display.start()
     png = exporter.export(toBytes=True)
-    display.stop()
     png.convertToFormat(QtGui.QImage.Format.Format_RGB32)
 
     width = png.width()
@@ -76,6 +79,7 @@ def render_gui(state, shape=None, is_engine=False):
     ptr = png.bits()
     ptr.setsize(height * width * 4)
     arr = np.array(ptr).reshape(height, width, 4)  # Copies the data
+    app.quit()
     return arr[..., [2, 1, 0, 3]]
 
 

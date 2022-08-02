@@ -33,13 +33,10 @@ class RxGuiNode(QtCore.QObject):
         if self.gui.is_engine:
             self.is_object = False
             self.node_type = "engine_node"
-        elif self.params()["entity_id"].startswith("eagerx.core.nodes"):
-            node_id = self.params()["entity_id"].split("/")[-1]
-            if node_id in ["ActionsNode", "ObservationsNode", "RenderNode"]:
-                # todo: check if sensors actuators should be added here
-                # todo: change entity_id format to new refactored style
-                self.node_type = node_id.lower()[:-4]
-                self.is_object = False
+        elif name in ["env/actions", "env/observations", "env/render"]:
+            # todo: check if sensors actuators should be added here
+            self.node_type = name.split("/")[-1]
+            self.is_object = False
         else:
             self.node_type = get_yaml_type(self.gui.graph.get_spec(name).params)
         self.allow_remove = True
