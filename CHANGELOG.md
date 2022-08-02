@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.10 (2022-08-02)
+### Fix
+* Atexit quit caused problems with rendering, so it is removed ([`267db81`](https://github.com/eager-dev/eagerx_gui/commit/267db810e9532acc88a606257b3d37a8dc5c5fb6))
+
 ## v0.2.9 (2022-08-02)
 ### Fix
 * Use atexit to close apps and allow to save gui render to filename ([`259a567`](https://github.com/eager-dev/eagerx_gui/commit/259a567530740c2e792b32ab98e3434c9ec31879))
