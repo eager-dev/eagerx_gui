@@ -238,7 +238,7 @@ def add_pos_to_state(state, is_engine=False):
                             y_pos[key][direction] += node_size
                             break
 
-    position_dict = nx.spring_layout(G, k=1, pos=fixed_positions, fixed=fixed_positions.keys())
+    position_dict = nx.spring_layout(G, k=1.5 * 150, pos=fixed_positions, fixed=fixed_positions.keys())
     for node, pos in position_dict.items():
         state["gui_state"][node]["pos"] = pos.tolist()
     y_offset = np.max(np.array(list(position_dict.values()))[:, 1]) + node_size
