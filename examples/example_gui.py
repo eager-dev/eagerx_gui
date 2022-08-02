@@ -1,5 +1,6 @@
 import eagerx
 import eagerx.engines.openai_gym as eagerx_gym
+from matplotlib import pyplot as plt
 
 
 if __name__ == "__main__":
@@ -21,21 +22,35 @@ if __name__ == "__main__":
     graph.connect(action="action",                  target=obj.actuators.action,    window=1)
 
     # Add rendering
-    # graph.add_component(obj.sensors.image)
-    # graph.render(source=obj.sensors.image, rate=10, encoding="rgb")
+    graph.add_component(obj.sensors.image)
+    graph.render(source=obj.sensors.image, rate=10, encoding="rgb")
 
     # Open gui
     graph.gui()
 
-    # Test save & load functionality
-    graph.save("./test.graph")
-    graph.load("./test.graph")
+    # Open render of gui
+    gui_render = graph.gui(interactive=False, filename="graph.svg")
+
+    # Show GUI render
+    plt.rcParams["figure.figsize"] = [10.00, 10.00]
+    plt.axis("off")
+    plt.imshow(gui_render)
+    plt.show()
+
+
 
     # Define engine
     from eagerx.engines.openai_gym.engine import GymEngine
     engine = GymEngine.make(rate=rate, sync=True, real_time_factor=0, process=eagerx.NEW_PROCESS)
 
     obj.gui(GymEngine)
+    engine_gui_render = obj.gui(GymEngine, interactive=False, filename="engine_graph", resolution=[3000, 3000])
+
+    # Show GUI render
+    plt.rcParams["figure.figsize"] = [10.00, 10.00]
+    plt.axis("off")
+    plt.imshow(engine_gui_render)
+    plt.show()
 
     # Define backend
     # from eagerx.backends.ros1 import Ros1

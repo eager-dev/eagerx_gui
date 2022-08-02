@@ -10,7 +10,7 @@ documentation = "https://eagerx.readthedocs.io/en/master/"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-eagerx = "^0.1.27"
+eagerx = "^0.1.30"
 opencv-python = "^4.5"
 pyqtgraph = "^0.12.4"
 PyQt6 = "^6.2.3"
