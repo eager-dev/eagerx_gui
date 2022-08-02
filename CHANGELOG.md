@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.9 (2022-08-02)
+### Fix
+* Use atexit to close apps and allow to save gui render to filename ([`259a567`](https://github.com/eager-dev/eagerx_gui/commit/259a567530740c2e792b32ab98e3434c9ec31879))
+
 ## v0.2.8 (2022-08-02)
 ### Fix
 * Make compatible with pyqt5 and with colab render node ([`d05fc0b`](https://github.com/eager-dev/eagerx_gui/commit/d05fc0ba5fe42be51f160ee71a7b7fb1ab5bb097))
