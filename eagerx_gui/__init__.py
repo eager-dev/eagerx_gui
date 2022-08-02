@@ -15,14 +15,12 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 import sys
 import numpy as np
-import atexit
 from pyqtgraph.Qt import QtWidgets, QtGui
 from eagerx_gui.gui import Gui
 
 
 def launch_gui(state, is_engine=False):
     app = QtWidgets.QApplication(sys.argv)
-    atexit.register(app.quit)
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()
@@ -51,7 +49,6 @@ def render_gui(state, resolution=None, is_engine=False, filename=None):
         resolution = [1920, 1080]
 
     app = QtWidgets.QApplication(sys.argv)
-    atexit.register(app.quit)
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()
