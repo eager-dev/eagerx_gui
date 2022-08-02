@@ -15,12 +15,14 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 import sys
 import numpy as np
+import atexit
 from pyqtgraph.Qt import QtWidgets, QtGui
 from eagerx_gui.gui import Gui
 
 
 def launch_gui(state, is_engine=False):
     app = QtWidgets.QApplication(sys.argv)
+    atexit.register(app.quit)
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()
@@ -44,11 +46,12 @@ def launch_gui(state, is_engine=False):
     return state
 
 
-def render_gui(state, shape=None, is_engine=False):
-    if shape is None:
-        shape = [1920, 1080]
+def render_gui(state, resolution=None, is_engine=False, filename=None):
+    if resolution is None:
+        resolution = [1920, 1080]
 
     app = QtWidgets.QApplication(sys.argv)
+    atexit.register(app.quit)
 
     ## Create main window with grid layout
     win = QtWidgets.QMainWindow()
@@ -66,9 +69,15 @@ def render_gui(state, shape=None, is_engine=False):
 
     win.show()
 
+    if filename is not None:
+        if not filename.endswith(".svg"):
+            filename += ".svg"
+        svgexporter = pg.exporters.SVGExporter(w.view.scene())
+        svgexporter.export(filename)
+
     exporter = pg.exporters.ImageExporter(w.view.scene())
-    exporter.parameters()["width"] = shape[0]
-    exporter.parameters()["height"] = shape[1]
+    exporter.parameters()["width"] = resolution[0]
+    exporter.parameters()["height"] = resolution[1]
 
     png = exporter.export(toBytes=True)
     png.convertToFormat(QtGui.QImage.Format.Format_RGB32)
