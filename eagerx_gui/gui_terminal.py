@@ -86,7 +86,7 @@ class GuiTerminal(object):
     def recolor(self, color=None, recurse=True):
         if color is None:
             if self.is_state:
-                if self.is_connectable:
+                if self.node_type == "object":
                     color = QtGui.QColor(255, 0, 0)
                 else:
                     color = QtGui.QColor(128, 128, 128)
