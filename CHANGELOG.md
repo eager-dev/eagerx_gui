@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.11 (2022-08-02)
+### Fix
+* Improve node positioning ([`c0972a2`](https://github.com/eager-dev/eagerx_gui/commit/c0972a2903a275397a8492cb5dc165570cd58ccc))
+
 ## v0.2.10 (2022-08-02)
 ### Fix
 * Atexit quit caused problems with rendering, so it is removed ([`267db81`](https://github.com/eager-dev/eagerx_gui/commit/267db810e9532acc88a606257b3d37a8dc5c5fb6))
