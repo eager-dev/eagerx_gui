@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eagerx_gui"
-version = "0.2.11"
+version = "0.2.12"
 license = "Apache2.0"
 description = "GUI to visualise graphs in EAGERx."
 authors = ["Jelle Luijkx <j.d.luijkx@tudelft.nl>", "Bas van der Heijden <d.s.vanderheijden@tudelft.nl>"]

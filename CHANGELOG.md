@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.12 (2022-08-03)
+### Fix
+* Make object states red ([`7f8ab7b`](https://github.com/eager-dev/eagerx_gui/commit/7f8ab7b89fe8c82145ed726036396619a10a2008))
+
 ## v0.2.11 (2022-08-02)
 ### Fix
 * Improve node positioning ([`c0972a2`](https://github.com/eager-dev/eagerx_gui/commit/c0972a2903a275397a8492cb5dc165570cd58ccc))
