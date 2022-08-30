@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.13 (2022-08-30)
+### Fix
+* Open menu upon right click ([`d1a3226`](https://github.com/eager-dev/eagerx_gui/commit/d1a3226d31d8abbcf23fc031cd80ba4dbf75e042))
+
 ## v0.2.12 (2022-08-03)
 ### Fix
 * Make object states red ([`7f8ab7b`](https://github.com/eager-dev/eagerx_gui/commit/7f8ab7b89fe8c82145ed726036396619a10a2008))
