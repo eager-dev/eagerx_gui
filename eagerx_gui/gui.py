@@ -177,6 +177,11 @@ class EagerxGraphWidget(dockarea.DockArea):
         self._viewBox = self.view.viewBox()
         self.scene.sigMouseHover.connect(self.hover_over)
 
+    def buildMenu(self, pos=None):
+        self.nodeMenu = QtWidgets.QMenu()
+        self.nodeMenu.triggered.connect(self.nodeMenuTriggered)
+        return self.nodeMenu
+
     def menuPosChanged(self, pos):
         self.menuPos = pos
 
@@ -186,6 +191,15 @@ class EagerxGraphWidget(dockarea.DockArea):
 
     def viewBox(self):
         return self._viewBox  # the viewBox that items should be added to
+
+    def nodeMenuTriggered(self, action):
+        nodeType = action.nodeType
+        if action.pos is not None:
+            pos = action.pos
+        else:
+            pos = self.menuPos
+        pos = self.viewBox().mapSceneToView(pos)
+        self.chart.createNode(nodeType, pos=pos)
 
     def hover_over(self, items):
         for item in items:
