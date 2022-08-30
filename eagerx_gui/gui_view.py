@@ -37,5 +37,4 @@ class RxViewBox(ViewBox):
 
     def getContextMenus(self, ev):
         ## called by scene to add menus on to someone else's context menu
-        self.widget.buildMenu(ev.scenePos())
         return [ViewBox.getMenu(self, ev)]
