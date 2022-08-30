@@ -133,3 +133,7 @@ dmypy.json
 
 # EAGERx graph
 test.graph
+
+# example
+examples/*.svg
+examples/*complex*
