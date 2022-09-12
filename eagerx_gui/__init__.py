@@ -45,7 +45,12 @@ def launch_gui(state, is_engine=False):
 
 
 def render_gui(state, resolution=None, is_engine=False, filename=None):
-    if resolution is None:
+    if resolution is not None:
+        assert (
+            type(resolution) is list or type(resolution) is np.ndarray
+        ), f"Invalid type for argument resolution. Should be list or ndarray, but is {type(resolution)}."
+        assert len(resolution) == 2, f"Invalid length argument resolution. Should be 2, but is {len(resolution)}."
+    else:
         resolution = [1920, 1080]
 
     app = QtWidgets.QApplication(sys.argv)
