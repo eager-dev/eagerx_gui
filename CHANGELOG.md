@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.14 (2022-09-13)
+### Fix
+* Graph refactor ([`6756fe3`](https://github.com/eager-dev/eagerx_gui/commit/6756fe3cbcf161630fbca7355ffb51d33963ac20))
+
 ## v0.2.13 (2022-08-30)
 ### Fix
 * Open menu upon right click ([`d1a3226`](https://github.com/eager-dev/eagerx_gui/commit/d1a3226d31d8abbcf23fc031cd80ba4dbf75e042))
