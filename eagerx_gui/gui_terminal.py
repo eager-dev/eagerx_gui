@@ -22,7 +22,7 @@ class GuiTerminal(object):
 
         name_split = name.split("/")
         self.terminal_type = name_split[0]
-        self.terminal_name = name_split[-1]
+        self.terminal_name = "/".join(name_split[1:])
 
         assert self.terminal_type in set.union(configuration.TERMS_IN, configuration.TERMS_OUT), (
             f"Invalid terminal type: {self.terminal_type}, "
