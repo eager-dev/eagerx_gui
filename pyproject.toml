@@ -21,7 +21,7 @@ pytest = "^7.1"
 black = "^22.3.0"
 pytest-cov = "^3.0.0"
 flake8 = ">=3.0"
-flake8-bugbear = "^22.3.23"
+flake8-bugbear = "^22.10.25"
 pytest-xvfb = "^2.0.0"
 
 [build-system]
