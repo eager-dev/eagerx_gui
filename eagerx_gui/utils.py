@@ -160,10 +160,14 @@ def add_pos_to_state(state, is_engine=False):
     left_max = 0
     right_max = 0
     for left_node in left_nodes:
+        if left_node not in state["nodes"].keys():
+            continue
         len_left = node_size * len(longest_shortest_simple_paths[left_node])
         if len_left > left_max:
             left_max = len_left
         for right_node in right_nodes:
+            if right_node not in state["nodes"].keys():
+                continue
             len_right = node_size * len(longest_shortest_simple_paths[right_node])
             if len_right > right_max:
                 right_max = len_right
@@ -237,11 +241,16 @@ def add_pos_to_state(state, is_engine=False):
                             fixed_positions[node] = [x_pos_cluster, fixed_positions[key][1] + y_pos[key][direction]]
                             y_pos[key][direction] += node_size
                             break
-
-    position_dict = nx.spring_layout(G, k=1.5 * 150, pos=fixed_positions, fixed=fixed_positions.keys())
+    if len(G.nodes()) > 0:
+        position_dict = nx.spring_layout(G, k=1.5 * 150, pos=fixed_positions, fixed=fixed_positions.keys())
+    else:
+        position_dict = {}
     for node, pos in position_dict.items():
         state["gui_state"][node]["pos"] = pos.tolist()
-    y_offset = np.max(np.array(list(position_dict.values()))[:, 1]) + node_size
+    if len(position_dict.values()) > 0:
+        y_offset = np.max(np.array(list(position_dict.values()))[:, 1]) + node_size
+    else:
+        y_offset = 0
     x_offset = x_max // 2
     for loose_cluster in loose_clusters:
         G = nx.Graph()
