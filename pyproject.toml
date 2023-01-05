@@ -12,7 +12,7 @@ documentation = "https://eagerx.readthedocs.io/en/master/"
 python = "^3.8"
 eagerx = "^0.1.30"
 opencv-python = "^4.5"
-pyqtgraph = "^0.12.4"
+pyqtgraph = ">=0.12.4,<0.14.0"
 PyQt6 = "^6.2.3"
 PyVirtualDisplay = "^3.0"
 
