@@ -566,14 +566,14 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "pyqtgraph"
-version = "0.12.4"
+version = "0.13.1"
 description = "Scientific Graphics and GUI Library for Python"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 
 [package.dependencies]
-numpy = ">=1.17.0"
+numpy = ">=1.20.0"
 
 [[package]]
 name = "pytest"
@@ -949,7 +949,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2772d21a312090e0b1e9b45c6494121bc531f2fb80e88bf0aaac8ee6a4e9c3c3"
+content-hash = "d90d0537354a05255eec8d5a33f773f6eabd076e2f9bcc6441a5dcc3a3f1eae6"
 
 [metadata.files]
 alabaster = [
@@ -1489,8 +1489,8 @@ pyqt6-sip = [
     {file = "PyQt6_sip-13.4.0.tar.gz", hash = "sha256:6d87a3ee5872d7511b76957d68a32109352caf3b7a42a01d9ee20032b350d979"},
 ]
 pyqtgraph = [
-    {file = "pyqtgraph-0.12.4-py3-none-any.whl", hash = "sha256:d98c6e26e9eda6d1d1bba92d6df381ef77fca18b701f9e136759ce31a17c6217"},
-    {file = "pyqtgraph-0.12.4.tar.gz", hash = "sha256:c2c8f2b7e1d7f97a710f370acff6368d686c9d6cdc560f2d83dcf59185dfa19d"},
+    {file = "pyqtgraph-0.13.1-py3-none-any.whl", hash = "sha256:906b2784c213890bf2a1df43e3675eff1921ee894ab9673468747fb993ea2d6c"},
+    {file = "pyqtgraph-0.13.1.tar.gz", hash = "sha256:698f87f59db965727b33602a0b29058de21291d8b143dea878b50578aec0dc08"},
 ]
 pytest = [
     {file = "pytest-7.2.0-py3-none-any.whl", hash = "sha256:892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71"},
