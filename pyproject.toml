@@ -18,7 +18,7 @@ PyVirtualDisplay = "^3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
-black = "^22.3.0"
+black = "^22.12.0"
 pytest-cov = "^3.0.0"
 flake8 = ">=3.0"
 flake8-bugbear = "^22.3.23"
