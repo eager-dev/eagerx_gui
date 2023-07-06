@@ -62,7 +62,7 @@ if __name__ == "__main__":
     env = eagerx_gym.EagerxGym(name="rx", rate=rate, graph=graph, engine=engine, backend=backend, render_mode="human")
 
     # Open GUI
-    # env.gui()
+    env.gui()
 
     # Start evaluation
     import time
