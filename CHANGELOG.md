@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.15 (2023-07-06)
+
+### Fix
+
+* Qt6 bug ([`2adcd4b`](https://github.com/eager-dev/eagerx_gui/commit/2adcd4b6333fa2e2d833aa4d80946a871b63376a))
+* Gymnasium support ([`d983dc6`](https://github.com/eager-dev/eagerx_gui/commit/d983dc6a7bf69b3ec727c39697b6ce5b86405d69))
+
 ## v0.2.14 (2022-09-13)
 ### Fix
 * Graph refactor ([`6756fe3`](https://github.com/eager-dev/eagerx_gui/commit/6756fe3cbcf161630fbca7355ffb51d33963ac20))
