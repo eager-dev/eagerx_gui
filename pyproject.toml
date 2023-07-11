@@ -14,7 +14,7 @@ eagerx = "^0.1.38"
 opencv-python = "^4.5"
 pyqtgraph = ">=0.12.4,<0.14.0"
 PyQt6 = ">6.2.3, <6.5.0"
-pyqt6-qt6 = ">6.2.3, <6.5.0"
+pyqt6-qt6 = ">6.2.3,<6.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2"
