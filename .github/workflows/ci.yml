@@ -57,10 +57,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run:  |
-          poetry run pip install setuptools==65.5.0 wheel==0.37.1
-          poetry run pip install gym==0.21.0
-          poetry install --no-interaction --no-root
+        run:  poetry install --no-interaction --no-root
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
@@ -75,18 +72,6 @@ jobs:
       - name: Lint with flake8
         run: |
           make lint
-      #----------------------------------------------
-      #  -----  install & configure ROS  -----
-      #----------------------------------------------
-      - name: install ROS
-        run: |
-          sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-          sudo apt install curl # if you haven't already installed curl
-          curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-          sudo apt update
-          sudo apt install ros-noetic-ros-base
-          echo "source /opt/ros/noetic/setup.bash" >> .venv/bin/activate
-          sudo apt-get install ros-noetic-cv-bridge
       #----------------------------------------------
       #  -----  install virtual display  -----
       #----------------------------------------------
@@ -110,8 +95,7 @@ jobs:
       #----------------------------------------------
       - name: Run tests
         run: |
-          source .venv/bin/activate
-          make pytest
+          poetry run make pytest
   release:
     needs: test
     # https://github.community/t/how-do-i-specify-job-dependency-running-in-another-workflow/16482
@@ -134,7 +118,7 @@ jobs:
       #-----------------------------------------------
       - name: Semantic Release
         run: |
-          pip install python-semantic-release
+          pip install python-semantic-release==7.34.6
           git config --global user.name "github-actions"
           git config --global user.email "action@github.com"
           semantic-release publish -D commit_author="github-actions <action@github.com>"
