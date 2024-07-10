@@ -49,6 +49,7 @@ If you are using EAGERx for your scientific publications, please cite:
      journal={arXiv preprint arXiv:2407.04328},
      year={2024}
    }
+
 Credits
 #######
 
