@@ -37,19 +37,6 @@ You can install the package using pip:
 
     pip3 install eagerx-gui
 
-Cite EAGERx
-###########
-
-If you are using EAGERx for your scientific publications, please cite:
-
-.. code:: bibtex
-   @article{vanderheijden2024eagerx,
-     title={EAGERx: Graph-Based Framework for Sim2real Robot Learning},
-     author={van der Heijden, Bas and Luijkx, Jelle and Ferranti, Laura and Kober, Jens and Babuska, Robert},
-     journal={arXiv preprint arXiv:2407.04328},
-     year={2024}
-   }
-
 Credits
 #######
 
